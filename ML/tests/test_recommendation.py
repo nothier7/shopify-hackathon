@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import unittest
+from pathlib import Path
 
 from ML import (
     DesignCandidate,
@@ -9,8 +11,12 @@ from ML import (
     Questionnaire,
     SwipeEvent,
     rank_and_optimize,
+    recommend_payload,
     update_after_swipe,
 )
+
+
+REPOSITORY_ROOT = Path(__file__).parents[2]
 
 
 def candidate(candidate_id: str, **attributes: float) -> DesignCandidate:
@@ -92,6 +98,23 @@ class RecommendationTests(unittest.TestCase):
         self.assertEqual(
             {item.product_id for item in selected}, {"chair-value", "lamp"}
         )
+
+    def test_shared_input_produces_documented_output(self) -> None:
+        payload = json.loads(
+            (REPOSITORY_ROOT / "model_input.example.json").read_text(encoding="utf-8")
+        )
+        expected = json.loads(
+            (REPOSITORY_ROOT / "model_output.example.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(recommend_payload(payload), expected)
+
+    def test_shared_input_is_strict_and_rejects_photo_fields(self) -> None:
+        payload = json.loads(
+            (REPOSITORY_ROOT / "model_input.example.json").read_text(encoding="utf-8")
+        )
+        payload["photo_url"] = "not accepted"
+        with self.assertRaisesRegex(ValueError, "extra=.*photo_url"):
+            recommend_payload(payload)
 
 
 if __name__ == "__main__":

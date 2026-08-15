@@ -1,0 +1,229 @@
+{
+  "preference_profile": {
+    "warmth": 0.8768,
+    "minimalism": 0.8223,
+    "natural_materials": 0.9162,
+    "colorfulness": 0.1398,
+    "modern": 0.5237,
+    "vintage": 0.4529,
+    "confidence": 0.9698,
+    "positive_terms": [
+      "natural_materials",
+      "cozy",
+      "warm",
+      "minimalist",
+      "wood",
+      "stone"
+    ],
+    "negative_terms": [
+      "bold",
+      "white",
+      "maximalist",
+      "white_furniture",
+      "cool",
+      "vintage"
+    ]
+  },
+  "ranked_designs": [
+    {
+      "design_id": "design_07",
+      "name": "Natural Cozy",
+      "score": 0.9628,
+      "preference_match": 0.9701,
+      "exploration_bonus": 0.0,
+      "original_swipe": "like"
+    },
+    {
+      "design_id": "design_03",
+      "name": "Japandi",
+      "score": 0.9574,
+      "preference_match": 0.9647,
+      "exploration_bonus": 0.0,
+      "original_swipe": "like"
+    },
+    {
+      "design_id": "design_01",
+      "name": "Warm Minimalist",
+      "score": 0.9505,
+      "preference_match": 0.9577,
+      "exploration_bonus": 0.0,
+      "original_swipe": "like"
+    },
+    {
+      "design_id": "design_10",
+      "name": "Warm Functional",
+      "score": 0.947,
+      "preference_match": 0.9542,
+      "exploration_bonus": 0.0,
+      "original_swipe": "like"
+    },
+    {
+      "design_id": "design_05",
+      "name": "Soft Modern",
+      "score": 0.8774,
+      "preference_match": 0.8841,
+      "exploration_bonus": 0.0,
+      "original_swipe": "like"
+    },
+    {
+      "design_id": "design_02",
+      "name": "NYC Vintage",
+      "score": 0.7771,
+      "preference_match": 0.7805,
+      "exploration_bonus": 0.3333,
+      "original_swipe": "pass"
+    },
+    {
+      "design_id": "design_08",
+      "name": "Industrial",
+      "score": 0.7276,
+      "preference_match": 0.7317,
+      "exploration_bonus": 0.1833,
+      "original_swipe": "pass"
+    },
+    {
+      "design_id": "design_09",
+      "name": "Modern Luxury",
+      "score": 0.6616,
+      "preference_match": 0.666,
+      "exploration_bonus": 0.0833,
+      "original_swipe": "pass"
+    },
+    {
+      "design_id": "design_04",
+      "name": "Cozy Dark Academia",
+      "score": 0.6421,
+      "preference_match": 0.6441,
+      "exploration_bonus": 0.3833,
+      "original_swipe": "pass"
+    },
+    {
+      "design_id": "design_06",
+      "name": "Colorful Modern",
+      "score": 0.1827,
+      "preference_match": 0.1823,
+      "exploration_bonus": 0.2333,
+      "original_swipe": "pass"
+    }
+  ],
+  "ranked_products": [
+    {
+      "product_id": "product_005",
+      "title": "Neutral Wall Art Set",
+      "category": "Wall art",
+      "merchant": "Merchant E",
+      "price_usd": 52.0,
+      "score": 0.6748,
+      "match_percent": 67
+    },
+    {
+      "product_id": "product_002",
+      "title": "Walnut Bedside Table",
+      "category": "Bedside table",
+      "merchant": "Merchant B",
+      "price_usd": 129.0,
+      "score": 0.6748,
+      "match_percent": 67
+    },
+    {
+      "product_id": "product_006",
+      "title": "Woven Storage Basket",
+      "category": "Storage",
+      "merchant": "Merchant F",
+      "price_usd": 48.0,
+      "score": 0.6706,
+      "match_percent": 67
+    },
+    {
+      "product_id": "product_003",
+      "title": "Arched Floor Lamp",
+      "category": "Floor lamp",
+      "merchant": "Merchant C",
+      "price_usd": 74.0,
+      "score": 0.6689,
+      "match_percent": 67
+    },
+    {
+      "product_id": "product_001",
+      "title": "Beige Boucle Accent Chair",
+      "category": "Chair",
+      "merchant": "Merchant A",
+      "price_usd": 189.0,
+      "score": 0.6689,
+      "match_percent": 67
+    },
+    {
+      "product_id": "product_004",
+      "title": "Cream Area Rug",
+      "category": "Rug",
+      "merchant": "Merchant D",
+      "price_usd": 116.0,
+      "score": 0.6662,
+      "match_percent": 67
+    }
+  ],
+  "final_room": {
+    "recommended_style": "Natural Cozy",
+    "design_direction": "A natural-materials, warmth, minimalism bedroom focused on cozy, expensive-looking, more functional, while preserving the listed room constraints.",
+    "match_percent": 73,
+    "selected_products": [
+      {
+        "product_id": "product_005",
+        "title": "Neutral Wall Art Set",
+        "category": "Wall art",
+        "merchant": "Merchant E",
+        "price_usd": 52.0,
+        "score": 0.6748,
+        "match_percent": 67
+      },
+      {
+        "product_id": "product_002",
+        "title": "Walnut Bedside Table",
+        "category": "Bedside table",
+        "merchant": "Merchant B",
+        "price_usd": 129.0,
+        "score": 0.6748,
+        "match_percent": 67
+      },
+      {
+        "product_id": "product_006",
+        "title": "Woven Storage Basket",
+        "category": "Storage",
+        "merchant": "Merchant F",
+        "price_usd": 48.0,
+        "score": 0.6706,
+        "match_percent": 67
+      },
+      {
+        "product_id": "product_003",
+        "title": "Arched Floor Lamp",
+        "category": "Floor lamp",
+        "merchant": "Merchant C",
+        "price_usd": 74.0,
+        "score": 0.6689,
+        "match_percent": 67
+      },
+      {
+        "product_id": "product_001",
+        "title": "Beige Boucle Accent Chair",
+        "category": "Chair",
+        "merchant": "Merchant A",
+        "price_usd": 189.0,
+        "score": 0.6689,
+        "match_percent": 67
+      },
+      {
+        "product_id": "product_004",
+        "title": "Cream Area Rug",
+        "category": "Rug",
+        "merchant": "Merchant D",
+        "price_usd": 116.0,
+        "score": 0.6662,
+        "match_percent": 67
+      }
+    ],
+    "total_usd": 608.0,
+    "budget_max_usd": 1000.0,
+    "remaining_usd": 392.0
+  }
+}

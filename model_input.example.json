@@ -1,0 +1,260 @@
+{
+  "questionnaire": {
+    "room_type": "Bedroom",
+    "budget": { "min_usd": 500, "max_usd": 1000 },
+    "effort_level": "Just add decor",
+    "goals": ["Cozy", "Expensive-looking", "More functional"],
+    "style_preferences": ["Minimal", "Cozy"]
+  },
+  "room_analysis": {
+    "room_description": "A small NYC rental bedroom with one front-facing window, a bed against the left wall, a dresser, and limited open floor space.",
+    "approximate_geometry": "Rectangular room with limited walking space between the bed and dresser.",
+    "existing_furniture": ["Bed", "Dresser"],
+    "existing_colors": ["White walls", "Dark brown furniture", "Gray bedding"],
+    "lighting": "One window with moderate natural light and one ceiling light.",
+    "empty_spaces": [
+      "Wall above the bed",
+      "Corner next to the window",
+      "Small area beside the dresser"
+    ],
+    "architectural_constraints": [
+      "Rental: walls and flooring cannot be permanently changed",
+      "Window and doorway must remain unobstructed"
+    ]
+  },
+  "designs_and_swipes": [
+    {
+      "design_id": "design_01",
+      "name": "Warm Minimalist",
+      "description": "Warm lighting, light wood, neutral textiles, minimal decor, and one plant.",
+      "style_metadata": {
+        "warmth": 0.9,
+        "minimalism": 0.9,
+        "natural_materials": 0.8,
+        "colorfulness": 0.2,
+        "modern": 0.8,
+        "vintage": 0.1
+      },
+      "swipe": "like",
+      "user_comment": "I like the warm lighting and wood."
+    },
+    {
+      "design_id": "design_02",
+      "name": "NYC Vintage",
+      "description": "Dark wood, vintage wall art, warm lamps, and layered textiles.",
+      "style_metadata": {
+        "warmth": 0.8,
+        "minimalism": 0.3,
+        "natural_materials": 0.7,
+        "colorfulness": 0.4,
+        "modern": 0.2,
+        "vintage": 0.9
+      },
+      "swipe": "pass",
+      "user_comment": "Too much decor."
+    },
+    {
+      "design_id": "design_03",
+      "name": "Japandi",
+      "description": "Low-profile furniture, warm wood, cream textiles, and uncluttered surfaces.",
+      "style_metadata": {
+        "warmth": 0.8,
+        "minimalism": 0.9,
+        "natural_materials": 0.9,
+        "colorfulness": 0.1,
+        "modern": 0.7,
+        "vintage": 0.1
+      },
+      "swipe": "like",
+      "user_comment": "Keep the natural materials."
+    },
+    {
+      "design_id": "design_04",
+      "name": "Cozy Dark Academia",
+      "description": "Dark colors, vintage details, layered lighting, books, and heavy textiles.",
+      "style_metadata": {
+        "warmth": 0.7,
+        "minimalism": 0.2,
+        "natural_materials": 0.6,
+        "colorfulness": 0.3,
+        "modern": 0.1,
+        "vintage": 0.9
+      },
+      "swipe": "pass",
+      "user_comment": "Too dark and too busy."
+    },
+    {
+      "design_id": "design_05",
+      "name": "Soft Modern",
+      "description": "Rounded furniture, neutral colors, soft lighting, and simple storage.",
+      "style_metadata": {
+        "warmth": 0.7,
+        "minimalism": 0.8,
+        "natural_materials": 0.5,
+        "colorfulness": 0.2,
+        "modern": 0.9,
+        "vintage": 0.1
+      },
+      "swipe": "like",
+      "user_comment": "I like the simple storage."
+    },
+    {
+      "design_id": "design_06",
+      "name": "Colorful Modern",
+      "description": "Bright accent colors, modern furniture, bold wall art, and colorful textiles.",
+      "style_metadata": {
+        "warmth": 0.5,
+        "minimalism": 0.5,
+        "natural_materials": 0.3,
+        "colorfulness": 0.9,
+        "modern": 0.9,
+        "vintage": 0.1
+      },
+      "swipe": "pass",
+      "user_comment": "Too colorful."
+    },
+    {
+      "design_id": "design_07",
+      "name": "Natural Cozy",
+      "description": "Warm wood, textured cream fabrics, plants, and soft ambient lighting.",
+      "style_metadata": {
+        "warmth": 0.9,
+        "minimalism": 0.7,
+        "natural_materials": 0.9,
+        "colorfulness": 0.2,
+        "modern": 0.6,
+        "vintage": 0.2
+      },
+      "swipe": "like",
+      "user_comment": "This feels cozy without being cluttered."
+    },
+    {
+      "design_id": "design_08",
+      "name": "Industrial",
+      "description": "Black metal, exposed textures, dark wood, and functional lighting.",
+      "style_metadata": {
+        "warmth": 0.3,
+        "minimalism": 0.6,
+        "natural_materials": 0.5,
+        "colorfulness": 0.1,
+        "modern": 0.7,
+        "vintage": 0.3
+      },
+      "swipe": "pass",
+      "user_comment": "The black metal feels too cold."
+    },
+    {
+      "design_id": "design_09",
+      "name": "Modern Luxury",
+      "description": "Neutral furniture, polished finishes, statement lighting, and minimal decor.",
+      "style_metadata": {
+        "warmth": 0.5,
+        "minimalism": 0.7,
+        "natural_materials": 0.3,
+        "colorfulness": 0.2,
+        "modern": 0.9,
+        "vintage": 0.1
+      },
+      "swipe": "pass",
+      "user_comment": "Looks expensive but not warm enough."
+    },
+    {
+      "design_id": "design_10",
+      "name": "Warm Functional",
+      "description": "Warm neutral colors, compact storage, soft lighting, and a clear walking path.",
+      "style_metadata": {
+        "warmth": 0.9,
+        "minimalism": 0.8,
+        "natural_materials": 0.7,
+        "colorfulness": 0.2,
+        "modern": 0.7,
+        "vintage": 0.1
+      },
+      "swipe": "like",
+      "user_comment": "Good balance of cozy and functional."
+    }
+  ],
+  "iteration_request": {
+    "user_comments": [
+      "Make it more cozy",
+      "Keep the room minimal",
+      "Use warm lighting and natural wood",
+      "Do not use white furniture",
+      "Stay within budget"
+    ]
+  },
+  "shopify_product_candidates": [
+    {
+      "product_id": "product_001",
+      "title": "Beige Boucle Accent Chair",
+      "description": "Compact beige boucle chair for a small bedroom corner.",
+      "category": "Chair",
+      "appearance": "Soft and rounded",
+      "style": "Modern",
+      "color": "Beige",
+      "material": "Boucle",
+      "price_usd": 189,
+      "merchant": "Merchant A"
+    },
+    {
+      "product_id": "product_002",
+      "title": "Walnut Bedside Table",
+      "description": "Small walnut bedside table with one storage drawer.",
+      "category": "Bedside table",
+      "appearance": "Compact with rounded corners",
+      "style": "Minimal",
+      "color": "Warm brown",
+      "material": "Walnut wood",
+      "price_usd": 129,
+      "merchant": "Merchant B"
+    },
+    {
+      "product_id": "product_003",
+      "title": "Arched Floor Lamp",
+      "description": "Warm floor lamp with an arched shape and soft ambient light.",
+      "category": "Floor lamp",
+      "appearance": "Arched",
+      "style": "Modern",
+      "color": "Brass and cream",
+      "material": "Metal and fabric",
+      "price_usd": 74,
+      "merchant": "Merchant C"
+    },
+    {
+      "product_id": "product_004",
+      "title": "Cream Area Rug",
+      "description": "Textured cream rug that adds warmth without bright colors.",
+      "category": "Rug",
+      "appearance": "Soft textured surface",
+      "style": "Cozy minimal",
+      "color": "Cream",
+      "material": "Wool blend",
+      "price_usd": 116,
+      "merchant": "Merchant D"
+    },
+    {
+      "product_id": "product_005",
+      "title": "Neutral Wall Art Set",
+      "description": "Minimal neutral wall art for the empty wall above the bed.",
+      "category": "Wall art",
+      "appearance": "Simple abstract shapes",
+      "style": "Minimal",
+      "color": "Cream and warm brown",
+      "material": "Paper and wood frame",
+      "price_usd": 52,
+      "merchant": "Merchant E"
+    },
+    {
+      "product_id": "product_006",
+      "title": "Woven Storage Basket",
+      "description": "Natural woven basket for compact bedroom storage.",
+      "category": "Storage",
+      "appearance": "Textured woven surface",
+      "style": "Natural",
+      "color": "Natural tan",
+      "material": "Woven fiber",
+      "price_usd": 48,
+      "merchant": "Merchant F"
+    }
+  ]
+}
