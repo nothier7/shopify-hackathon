@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 30% 96%;
+    --foreground: 30 15% 14%;
+    --card: 40 50% 99%;
+    --card-foreground: 30 15% 14%;
+    --popover: 40 50% 99%;
+    --popover-foreground: 30 15% 14%;
+    --primary: 30 15% 14%;
+    --primary-foreground: 40 30% 96%;
+    --secondary: 38 20% 90%;
+    --secondary-foreground: 30 15% 14%;
+    --muted: 38 18% 88%;
+    --muted-foreground: 30 8% 42%;
+    --accent: 12 40% 58%;
+    --accent-foreground: 40 50% 99%;
+    --destructive: 0 55% 50%;
+    --destructive-foreground: 40 50% 99%;
+    --border: 35 12% 80%;
+    --input: 35 12% 80%;
+    --ring: 30 15% 14%;
+    --radius: 0.5rem;
+    --font-heading: 'Playfair Display', ui-serif, Georgia, serif;
+    --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Playfair Display', ui-serif, Georgia, serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+    --chart-1: 12 40% 58%;
+    --chart-2: 170 20% 40%;
+    --chart-3: 200 30% 50%;
+    --chart-4: 30 40% 55%;
+    --chart-5: 0 40% 55%;
+
+    --sidebar-background: 40 30% 96%;
+    --sidebar-foreground: 30 15% 14%;
+    --sidebar-primary: 30 15% 14%;
+    --sidebar-primary-foreground: 40 30% 96%;
+    --sidebar-accent: 38 20% 90%;
+    --sidebar-accent-foreground: 30 15% 14%;
+    --sidebar-border: 35 12% 80%;
+    --sidebar-ring: 30 15% 14%;
+  }
+
+  .dark {
+    --background: 40 30% 96%;
+    --foreground: 30 15% 14%;
+    --card: 40 50% 99%;
+    --card-foreground: 30 15% 14%;
+    --popover: 40 50% 99%;
+    --popover-foreground: 30 15% 14%;
+    --primary: 30 15% 14%;
+    --primary-foreground: 40 30% 96%;
+    --secondary: 38 20% 90%;
+    --secondary-foreground: 30 15% 14%;
+    --muted: 38 18% 88%;
+    --muted-foreground: 30 8% 42%;
+    --accent: 12 40% 58%;
+    --accent-foreground: 40 50% 99%;
+    --destructive: 0 55% 50%;
+    --destructive-foreground: 40 50% 99%;
+    --border: 35 12% 80%;
+    --input: 35 12% 80%;
+    --ring: 30 15% 14%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
