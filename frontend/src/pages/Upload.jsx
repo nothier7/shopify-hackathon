@@ -4,29 +4,39 @@ import { motion } from 'framer-motion';
 import { UploadCloud, Check, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/SessionContext';
-import { base44 } from '@/api/base44Client';
+import { generateDesigns } from '@/api/roomswipeApi';
 import { cn } from '@/lib/utils';
 
 export default function Upload() {
   const navigate = useNavigate();
-  const { questionnaire, createSession, saveDesigns } = useSession();
+  const { questionnaire, savePhoto, saveDesigns } = useSession();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [error, setError] = useState('');
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!questionnaire) navigate('/questionnaire');
-  }, []);
+  }, [navigate, questionnaire]);
 
   if (!questionnaire) return null;
 
   const handleFile = (f) => {
-    if (!f || !f.type.startsWith('image/')) return;
+    if (!f || !['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
+      setError('Choose a JPEG, PNG, or WebP room photo.');
+      return;
+    }
+    if (f.size > 10_000_000) {
+      setError('Choose an image smaller than 10MB.');
+      return;
+    }
+    if (preview) URL.revokeObjectURL(preview);
     setFile(f);
     setPreview(URL.createObjectURL(f));
+    setError('');
   };
 
   const handleDrop = (e) => {
@@ -38,29 +48,18 @@ export default function Upload() {
 
   const handleGenerate = async () => {
     setLoading(true);
+    setError('');
     try {
-      setLoadingMessage('Uploading your room photo');
-      const uploadRes = await base44.integrations.Core.UploadFile({ file });
-
       setLoadingMessage('Designing room variations');
-      const session = await createSession(uploadRes.file_url);
-
-      const response = await base44.functions.invoke('generateRoomDesigns', {
-        room_type: questionnaire.room_type,
-        budget: questionnaire.budget,
-        diy_level: questionnaire.diy_level,
-        goal: questionnaire.goal,
-        style_preferences: questionnaire.style_preferences,
-        photo_url: uploadRes.file_url
-      });
-
-      await saveDesigns(response.data.designs, session.id);
+      const candidates = await generateDesigns(file, questionnaire);
+      savePhoto(file, preview);
+      saveDesigns(candidates);
       navigate('/swipe');
     } catch (err) {
       console.error(err);
       setLoading(false);
       setLoadingMessage('');
-      alert('Something went wrong. Please try again.');
+      setError(err.message || 'Room generation failed. Please try again.');
     }
   };
 
@@ -108,7 +107,12 @@ export default function Upload() {
               </div>
               <div className="absolute top-4 right-4">
                 <button
-                  onClick={(e) => { e.stopPropagation(); setFile(null); setPreview(null); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    URL.revokeObjectURL(preview);
+                    setFile(null);
+                    setPreview(null);
+                  }}
                   className="px-3 py-1.5 rounded-full border border-foreground/40 bg-background/60 backdrop-blur-sm text-foreground text-xs tracking-wider uppercase hover:bg-foreground/10 transition-colors"
                 >
                   Change
@@ -125,6 +129,10 @@ export default function Upload() {
             </div>
           )}
         </div>
+
+        {error ? (
+          <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>
+        ) : null}
 
         <Button
           variant="outline"

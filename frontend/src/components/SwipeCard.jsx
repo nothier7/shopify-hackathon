@@ -11,6 +11,9 @@ export default function SwipeCard({ design, onSwipe, isTop, offsetFromTop, butto
 
   const scale = 1 - offsetFromTop * 0.04;
   const yOffset = offsetFromTop * 10;
+  const imageUrl = design.imageUrl || design.image_url;
+  const designName = design.name || design.style_name;
+  const description = design.description || design.items?.join(', ');
 
   useEffect(() => {
     if (!isTop || !buttonSwipe || exitDir !== 0) return;
@@ -56,8 +59,8 @@ export default function SwipeCard({ design, onSwipe, isTop, offsetFromTop, butto
       }
     >
       <div className="relative w-full h-full rounded-lg overflow-hidden shadow-2xl bg-card border border-border">
-        {design.image_url ? (
-          <Image src={design.image_url} fittingType="fill" className="w-full h-full" />
+        {imageUrl ? (
+          <Image src={imageUrl} fittingType="fill" className="w-full h-full" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-secondary">
             <div className="flex flex-col items-center gap-3">
@@ -81,8 +84,8 @@ export default function SwipeCard({ design, onSwipe, isTop, offsetFromTop, butto
         </motion.div>
 
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background/70 to-transparent p-6 pt-16 pointer-events-none">
-          <h3 className="text-foreground font-display text-2xl mb-1">{design.style_name}</h3>
-          <p className="text-foreground/60 text-sm leading-relaxed">{design.description}</p>
+          <h3 className="text-foreground font-display text-2xl mb-1">{designName}</h3>
+          <p className="text-foreground/60 text-sm leading-relaxed">{description}</p>
         </div>
       </div>
     </motion.div>

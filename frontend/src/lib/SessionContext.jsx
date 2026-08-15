@@ -1,111 +1,113 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
 
 const SessionContext = createContext(null);
 
 export function useSession() {
-  const ctx = useContext(SessionContext);
-  if (!ctx) throw new Error('useSession must be used within SessionProvider');
-  return ctx;
-}
-
-function parseBudgetValue(budget) {
-  if (!budget) return 1000;
-  const numbers = budget.match(/[\d,]+/g);
-  if (numbers && numbers.length >= 2) return parseInt(numbers[1].replace(/,/g, ''));
-  if (numbers && numbers.length >= 1) return parseInt(numbers[0].replace(/,/g, ''));
-  return 1000;
+  const context = useContext(SessionContext);
+  if (!context) throw new Error('useSession must be used within SessionProvider');
+  return context;
 }
 
 export function SessionProvider({ children }) {
   const [questionnaire, setQuestionnaire] = useState(null);
-  const [session, setSession] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState(null);
   const [designs, setDesigns] = useState([]);
-  const [finalLook, setFinalLook] = useState(null);
-  const [matchedProducts, setMatchedProducts] = useState([]);
-  const [cart, setCart] = useState([]);
+  const [swipes, setSwipes] = useState([]);
+  const [preferenceProfile, setPreferenceProfile] = useState(null);
+  const [recommendedDesign, setRecommendedDesign] = useState(null);
+  const [manifest, setManifest] = useState(null);
+  const [offers, setOffers] = useState([]);
+  const [selectedOffers, setSelectedOffers] = useState([]);
+  const [merchantCarts, setMerchantCarts] = useState([]);
+  const [cartFailures, setCartFailures] = useState([]);
+  const previewUrlRef = useRef(null);
 
-  const createSession = useCallback(async (photoUrl) => {
-    const s = await base44.entities.RoomSession.create({
-      ...questionnaire,
-      photo_url: photoUrl,
-      budget_value: parseBudgetValue(questionnaire.budget),
-      status: 'swiping'
-    });
-    setSession(s);
-    return s;
-  }, [questionnaire]);
-
-  const saveDesigns = useCallback(async (designConcepts, sessionId) => {
-    const records = await base44.entities.RoomDesign.bulkCreate(
-      designConcepts.map((d, i) => ({
-        session_id: sessionId,
-        style_name: d.style_name,
-        description: d.description,
-        image_prompt: d.image_prompt,
-        style_metadata: d.style_metadata,
-        swipe_result: 'pending',
-        order_index: i
-      }))
-    );
-    setDesigns(records);
-    return records;
+  const savePhoto = useCallback((file, previewUrl) => {
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    previewUrlRef.current = previewUrl;
+    setPhotoFile(file);
+    setPhotoPreviewUrl(previewUrl);
   }, []);
 
-  const updateDesignImage = useCallback((designId, imageUrl) => {
-    setDesigns(prev => prev.map(d => d.id === designId ? { ...d, image_url: imageUrl } : d));
+  const saveDesigns = useCallback((candidates) => {
+    setDesigns(candidates.map(candidate => ({ ...candidate, swipe_result: 'pending' })));
+    setSwipes([]);
   }, []);
 
-  const swipeDesign = useCallback(async (designId, result) => {
-    setDesigns(prev => prev.map(d => d.id === designId ? { ...d, swipe_result: result } : d));
-    await base44.entities.RoomDesign.update(designId, { swipe_result: result });
+  const swipeDesign = useCallback((designId, result) => {
+    const liked = result === 'like';
+    setDesigns(current => current.map(design => (
+      design.id === designId ? { ...design, swipe_result: result } : design
+    )));
+    setSwipes(current => [
+      ...current.filter(swipe => swipe.candidateId !== designId),
+      { candidateId: designId, liked }
+    ]);
   }, []);
 
-  const saveFinalLook = useCallback(async (data) => {
-    if (session) {
-      const updated = await base44.entities.RoomSession.update(session.id, {
-        status: 'products',
-        style_profile: data.style_profile,
-        final_look_description: data.final_look_description,
-        final_look_prompt: data.final_look_prompt,
-        product_intents: data.product_intents,
-        final_look_url: data.final_look_url
-      });
-      setSession(updated);
-    }
-    setFinalLook(data);
-  }, [session]);
-
-  const updateFinalLook = useCallback((data) => {
-    setFinalLook(prev => ({ ...prev, ...data }));
+  const saveRecommendation = useCallback((profile, design) => {
+    setPreferenceProfile(profile);
+    setRecommendedDesign(design);
   }, []);
 
-  const addToCart = useCallback((product) => {
-    setCart(prev => prev.find(p => p.id === product.id) ? prev : [...prev, product]);
+  const selectOffer = useCallback((offer) => {
+    setSelectedOffers(current => [
+      ...current.filter(selected => selected.slotId !== offer.slotId),
+      offer
+    ]);
   }, []);
 
-  const removeFromCart = useCallback((productId) => {
-    setCart(prev => prev.filter(p => p.id !== productId));
+  const removeOffer = useCallback((variantId) => {
+    setSelectedOffers(current => current.filter(offer => offer.variantId !== variantId));
   }, []);
 
-  const clearCart = useCallback(() => setCart([]), []);
+  const saveCartResult = useCallback((result) => {
+    setMerchantCarts(result.carts || []);
+    setCartFailures(result.failures || []);
+  }, []);
 
   const reset = useCallback(() => {
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    previewUrlRef.current = null;
     setQuestionnaire(null);
-    setSession(null);
+    setPhotoFile(null);
+    setPhotoPreviewUrl(null);
     setDesigns([]);
-    setFinalLook(null);
-    setMatchedProducts([]);
-    setCart([]);
+    setSwipes([]);
+    setPreferenceProfile(null);
+    setRecommendedDesign(null);
+    setManifest(null);
+    setOffers([]);
+    setSelectedOffers([]);
+    setMerchantCarts([]);
+    setCartFailures([]);
   }, []);
 
   const value = {
-    questionnaire, setQuestionnaire,
-    session, createSession,
-    designs, saveDesigns, updateDesignImage, swipeDesign,
-    finalLook, saveFinalLook, updateFinalLook,
-    matchedProducts, setMatchedProducts,
-    cart, addToCart, removeFromCart, clearCart,
+    questionnaire,
+    setQuestionnaire,
+    photoFile,
+    photoPreviewUrl,
+    savePhoto,
+    designs,
+    saveDesigns,
+    swipes,
+    swipeDesign,
+    preferenceProfile,
+    recommendedDesign,
+    saveRecommendation,
+    manifest,
+    setManifest,
+    offers,
+    setOffers,
+    selectedOffers,
+    setSelectedOffers,
+    selectOffer,
+    removeOffer,
+    merchantCarts,
+    cartFailures,
+    saveCartResult,
     reset
   };
 
