@@ -181,8 +181,12 @@ class ShopifyCartService:
                 }
             },
         )
-        cart = content.get("cart")
-        if not isinstance(cart, Mapping):
+        wrapped_cart = content.get("cart")
+        if isinstance(wrapped_cart, Mapping):
+            cart = wrapped_cart
+        elif all(field in content for field in ("id", "line_items", "continue_url")):
+            cart = content
+        else:
             raise CartCreationError("merchant returned an invalid cart")
 
         cart_id = cart.get("id")

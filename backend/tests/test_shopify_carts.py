@@ -53,13 +53,11 @@ class StubMcpClient:
 
         lines = call["arguments"]["cart"]["line_items"]
         return {
-            "cart": {
-                "id": f"gid://shopify/Cart/{len(self.calls)}",
-                "currency": "USD",
-                "line_items": lines,
-                "totals": [{"type": "subtotal", "amount": 10_000 * len(lines)}],
-                "continue_url": f"{endpoint}/continue",
-            }
+            "id": f"gid://shopify/Cart/{len(self.calls)}",
+            "currency": "USD",
+            "line_items": lines,
+            "totals": [{"type": "subtotal", "amount": 10_000 * len(lines)}],
+            "continue_url": f"{endpoint}/continue",
         }
 
 
