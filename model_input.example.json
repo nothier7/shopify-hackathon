@@ -1,0 +1,210 @@
+[
+  {
+    "id": "candidate-scandinavian",
+    "name": "Scandinavian",
+    "imageUrl": "https://example.com/generated/scandinavian.png",
+    "attributes": { "minimalism": 0.85, "warmth": 0.7, "color": 0.25 },
+    "warmth": 0.7,
+    "lighting": "soft natural daylight",
+    "items": ["light oak furniture", "linen textiles", "simple pendant lamp"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "comment": "I like the light oak and natural lighting.",
+    "like": "Yes"
+  },
+  {
+    "id": "candidate-mid-century-modern",
+    "name": "Mid-century modern",
+    "imageUrl": "https://example.com/generated/mid-century-modern.png",
+    "attributes": { "minimalism": 0.55, "warmth": 0.72, "color": 0.55 },
+    "warmth": 0.72,
+    "lighting": "warm ambient lamps",
+    "items": ["walnut sideboard", "tapered-leg seating", "brass floor lamp"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "comment": "The walnut is good, but I want less visual clutter.",
+    "like": "Yes"
+  },
+  {
+    "id": "candidate-japandi",
+    "name": "Japandi",
+    "imageUrl": "https://example.com/generated/japandi.png",
+    "attributes": { "minimalism": 0.9, "warmth": 0.62, "color": 0.2 },
+    "warmth": 0.62,
+    "lighting": "diffused natural daylight",
+    "items": ["low-profile wood furniture", "paper lantern", "ceramic accents"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "comment": "Natural wood and the uncluttered layout work well.",
+    "like": "Yes"
+  },
+  {
+    "id": "candidate-industrial-loft",
+    "name": "Industrial loft",
+    "imageUrl": "https://example.com/generated/industrial-loft.png",
+    "attributes": { "minimalism": 0.45, "warmth": 0.35, "color": 0.35 },
+    "warmth": 0.35,
+    "lighting": "directional track lighting",
+    "items": ["metal shelving", "leather seating", "exposed-style fixtures"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "comment": "Too cold and too much metal.",
+    "like": "No"
+  },
+  {
+    "id": "candidate-contemporary",
+    "name": "Contemporary",
+    "imageUrl": "https://example.com/generated/contemporary.png",
+    "attributes": { "minimalism": 0.7, "warmth": 0.5, "color": 0.45 },
+    "warmth": 0.5,
+    "lighting": "layered recessed and accent lighting",
+    "items": ["clean-lined sofa", "abstract art", "sculptural table lamp"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "like": "No"
+  },
+  {
+    "id": "candidate-bohemian",
+    "name": "Bohemian",
+    "imageUrl": "https://example.com/generated/bohemian.png",
+    "attributes": { "minimalism": 0.25, "warmth": 0.82, "color": 0.8 },
+    "warmth": 0.82,
+    "lighting": "golden table and floor lamps",
+    "items": ["woven rug", "plants", "textured pillows"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "comment": "Too colorful and busy.",
+    "like": "No"
+  },
+  {
+    "id": "candidate-coastal",
+    "name": "Coastal",
+    "imageUrl": "https://example.com/generated/coastal.png",
+    "attributes": { "minimalism": 0.6, "warmth": 0.68, "color": 0.45 },
+    "warmth": 0.68,
+    "lighting": "bright natural daylight",
+    "items": ["linen sofa", "rattan accents", "airy curtains"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "comment": "I like the linen, but not a strong beach theme.",
+    "like": "Yes"
+  },
+  {
+    "id": "candidate-art-deco",
+    "name": "Art Deco",
+    "imageUrl": "https://example.com/generated/art-deco.png",
+    "attributes": { "minimalism": 0.3, "warmth": 0.6, "color": 0.75 },
+    "warmth": 0.6,
+    "lighting": "dramatic warm accent lighting",
+    "items": ["velvet chair", "geometric mirror", "brass details"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "comment": "Too decorative for the room.",
+    "like": "No"
+  },
+  {
+    "id": "candidate-modern-farmhouse",
+    "name": "Modern farmhouse",
+    "imageUrl": "https://example.com/generated/modern-farmhouse.png",
+    "attributes": { "minimalism": 0.45, "warmth": 0.78, "color": 0.35 },
+    "warmth": 0.78,
+    "lighting": "warm pendant and table lighting",
+    "items": ["wood dining table", "neutral upholstery", "vintage-style rug"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "like": "No"
+  },
+  {
+    "id": "candidate-eclectic",
+    "name": "Eclectic",
+    "imageUrl": "https://example.com/generated/eclectic.png",
+    "attributes": { "minimalism": 0.15, "warmth": 0.74, "color": 0.9 },
+    "warmth": 0.74,
+    "lighting": "layered lamps and natural light",
+    "items": ["gallery wall", "mixed-pattern textiles", "statement chair"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "comment": "Far too colorful and busy.",
+    "like": "No"
+  }
+]

@@ -12,9 +12,12 @@ class Settings(BaseSettings):
     openai_image_model: str | None = None
     openai_vision_model: str = "gpt-4.1-mini"
 
-    shopify_agent_profile_url: str | None = None
+    shopify_agent_profile_url: str = (
+        "https://shopify.dev/ucp/agent-profiles/2026-04-08/valid-with-capabilities.json"
+    )
     shopify_global_catalog_mcp_url: str = "https://catalog.shopify.com/api/ucp/mcp"
     shopify_request_timeout_seconds: float = 20.0
+    shopify_reference_image_max_bytes: int = 10_000_000
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

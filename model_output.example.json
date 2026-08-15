@@ -1,0 +1,43 @@
+{
+  "recommendedDesign": {
+    "name": "Japandi",
+    "description": "A minimalist living room in the Japandi direction, emphasizing minimalism and warmth with diffused natural daylight.",
+    "matchPercent": 91,
+    "items": [
+      {
+        "name": "low-profile wood furniture",
+        "description": "Low-profile wood furniture matching the Japandi direction, with diffused natural daylight, for a minimalist living room; derived from the selected design.",
+        "maxPriceMinor": 10000,
+        "currency": "USD"
+      },
+      {
+        "name": "paper lantern",
+        "description": "Paper lantern matching the Japandi direction, with diffused natural daylight, for a minimalist living room; derived from the selected design.",
+        "maxPriceMinor": 10000,
+        "currency": "USD"
+      },
+      {
+        "name": "ceramic accents",
+        "description": "Ceramic accents matching the Japandi direction, with diffused natural daylight, for a minimalist living room; derived from the selected design.",
+        "maxPriceMinor": 10000,
+        "currency": "USD"
+      },
+      {
+        "name": "compact comfortable seating",
+        "description": "Compact comfortable seating matching the Japandi direction, with diffused natural daylight, for a minimalist living room; derived from the questionnaire goal \"comfortable seating\".",
+        "maxPriceMinor": 10000,
+        "currency": "USD"
+      },
+      {
+        "name": "compact work desk",
+        "description": "Compact work desk matching the Japandi direction, with diffused natural daylight, for a minimalist living room; derived from the questionnaire goal \"a small work corner\".",
+        "maxPriceMinor": 10000,
+        "currency": "USD"
+      }
+    ],
+    "budget": {
+      "maxTotalMinor": 50000,
+      "currency": "USD"
+    }
+  }
+}
