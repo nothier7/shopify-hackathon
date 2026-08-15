@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_image_model: str | None = None
     openai_vision_model: str = "gpt-4.1-mini"
+    openai_image_concurrency: int = Field(default=3, ge=1, le=10)
 
     shopify_agent_profile_url: str = (
         "https://shopify.dev/ucp/agent-profiles/2026-04-08/valid-with-capabilities.json"

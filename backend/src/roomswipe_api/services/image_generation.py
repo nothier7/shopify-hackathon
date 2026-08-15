@@ -1,9 +1,12 @@
 """OpenAI-backed room analysis and room-concept image generation."""
 
+import asyncio
 import base64
 import json
+import logging
 import random
 import re
+import time
 from dataclasses import dataclass
 from typing import Any, Protocol
 from uuid import uuid4
@@ -20,6 +23,8 @@ from roomswipe_api.schemas import (
     RecommendedDesign,
     RoomAnalysis,
 )
+
+logger = logging.getLogger("uvicorn.error.roomswipe.image_generation")
 
 
 class ImageGenerationService(Protocol):
@@ -194,10 +199,47 @@ class OpenAIImageGenerationService:
         questionnaire: Questionnaire,
         count: int,
     ) -> list[DesignCandidate]:
-        return [
-            await self._edit_style(image, content_type, questionnaire, style)
-            for style in choose_styles(count)
-        ]
+        styles = choose_styles(count)
+        concurrency = min(self.settings.openai_image_concurrency, count)
+        semaphore = asyncio.Semaphore(concurrency)
+        started = time.perf_counter()
+
+        logger.info(
+            "Room variation batch started count=%d concurrency=%d model=%s",
+            count,
+            concurrency,
+            self.settings.openai_image_model or "gpt-image-1.5",
+        )
+
+        async def generate(style: Style) -> DesignCandidate:
+            async with semaphore:
+                style_started = time.perf_counter()
+                logger.info("Room variation started style=%s", style.name)
+                try:
+                    candidate = await self._edit_style(
+                        image, content_type, questionnaire, style
+                    )
+                except Exception:
+                    logger.exception(
+                        "Room variation failed style=%s elapsed_seconds=%.1f",
+                        style.name,
+                        time.perf_counter() - style_started,
+                    )
+                    raise
+                logger.info(
+                    "Room variation completed style=%s elapsed_seconds=%.1f",
+                    style.name,
+                    time.perf_counter() - style_started,
+                )
+                return candidate
+
+        designs = await asyncio.gather(*(generate(style) for style in styles))
+        logger.info(
+            "Room variation batch completed count=%d elapsed_seconds=%.1f",
+            len(designs),
+            time.perf_counter() - started,
+        )
+        return list(designs)
 
     async def generate_final_design(
         self,
@@ -261,6 +303,9 @@ class OpenAIImageGenerationService:
         return _candidate_from_response(response, style, questionnaire)
 
     async def _post(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
+        started = time.perf_counter()
+        model = payload.get("model", "unknown")
+        logger.info("OpenAI request started path=%s model=%s", path, model)
         try:
             async with httpx.AsyncClient(
                 base_url="https://api.openai.com/v1", timeout=90, transport=self.transport
@@ -271,12 +316,33 @@ class OpenAIImageGenerationService:
                     json=payload,
                 )
                 response.raise_for_status()
+                logger.info(
+                    "OpenAI request completed path=%s model=%s status=%d elapsed_seconds=%.1f",
+                    path,
+                    model,
+                    response.status_code,
+                    time.perf_counter() - started,
+                )
                 return response.json()
         except httpx.HTTPStatusError as exc:
+            logger.error(
+                "OpenAI request failed path=%s model=%s status=%d elapsed_seconds=%.1f",
+                path,
+                model,
+                exc.response.status_code,
+                time.perf_counter() - started,
+            )
             raise ImageGenerationError(
                 f"OpenAI request failed ({exc.response.status_code})."
             ) from exc
         except httpx.HTTPError as exc:
+            logger.error(
+                "OpenAI request failed path=%s model=%s error=%s elapsed_seconds=%.1f",
+                path,
+                model,
+                type(exc).__name__,
+                time.perf_counter() - started,
+            )
             raise ImageGenerationError("Could not reach OpenAI.") from exc
 
     def _require_key(self) -> None:

@@ -1,8 +1,28 @@
 const API_ROOT = (import.meta.env.VITE_ROOMSWIPE_API_URL || '/api/v1').replace(/\/$/, '');
 
 async function apiRequest(path, options = {}) {
-  const response = await fetch(`${API_ROOT}${path}`, options);
-  if (response.ok) return response.json();
+  const started = Date.now();
+  const method = options.method || 'GET';
+  console.info(`[RoomSwipe API] ${method} ${path} started`);
+
+  let response;
+  try {
+    response = await fetch(`${API_ROOT}${path}`, options);
+  } catch (error) {
+    console.error(
+      `[RoomSwipe API] ${method} ${path} network failure after ${Date.now() - started}ms`,
+      error,
+    );
+    throw error;
+  }
+
+  if (response.ok) {
+    const body = await response.json();
+    console.info(
+      `[RoomSwipe API] ${method} ${path} completed (${response.status}) in ${Date.now() - started}ms`,
+    );
+    return body;
+  }
 
   let detail = `RoomSwipe API request failed (${response.status})`;
   try {
@@ -12,6 +32,9 @@ async function apiRequest(path, options = {}) {
   } catch {
     // Keep the status-based fallback for non-JSON upstream failures.
   }
+  console.error(
+    `[RoomSwipe API] ${method} ${path} failed (${response.status}) after ${Date.now() - started}ms: ${detail}`,
+  );
   throw new Error(detail);
 }
 

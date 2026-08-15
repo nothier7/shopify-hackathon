@@ -14,12 +14,25 @@ export default function Upload() {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!questionnaire) navigate('/questionnaire');
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      setElapsedSeconds(0);
+      return undefined;
+    }
+    const started = Date.now();
+    const timer = window.setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - started) / 1000));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [loading]);
 
   if (!questionnaire) return null;
 
@@ -57,7 +70,9 @@ export default function Upload() {
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-6">
         <div className="w-10 h-10 rounded-full border border-foreground/20 border-t-foreground animate-spin mb-8" />
         <p className="font-display text-xl mb-2">{loadingMessage}</p>
-        <p className="text-sm text-muted-foreground font-light">This may take a few seconds</p>
+        <p className="text-sm text-muted-foreground font-light">
+          Generating 10 designs in parallel · {elapsedSeconds}s elapsed
+        </p>
       </div>
     );
   }
