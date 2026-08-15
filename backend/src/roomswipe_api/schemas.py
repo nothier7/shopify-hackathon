@@ -75,6 +75,57 @@ class PreferenceProfile(ApiModel):
     negative_count: int = Field(default=0, ge=0)
 
 
+class RecommendedItem(ApiModel):
+    name: str
+    description: str
+    max_price_minor: int = Field(ge=0)
+    currency: str = Field(min_length=3, max_length=3)
+
+    @field_validator("currency")
+    @classmethod
+    def uppercase_currency(cls, value: str) -> str:
+        return value.upper()
+
+
+class RecommendedBudget(ApiModel):
+    max_total_minor: int = Field(ge=0)
+    currency: str = Field(min_length=3, max_length=3)
+
+    @field_validator("currency")
+    @classmethod
+    def uppercase_currency(cls, value: str) -> str:
+        return value.upper()
+
+
+class RecommendedDesign(ApiModel):
+    name: str
+    description: str
+    match_percent: int = Field(ge=0, le=100)
+    items: list[RecommendedItem] = Field(min_length=1)
+    budget: RecommendedBudget
+
+
+class FinalizeRecommendationRequest(ApiModel):
+    candidates: list[DesignCandidate] = Field(min_length=10, max_length=10)
+    swipes: list[SwipeEvent] = Field(min_length=10, max_length=10)
+
+    @model_validator(mode="after")
+    def require_one_swipe_per_candidate(self) -> "FinalizeRecommendationRequest":
+        candidate_ids = [candidate.id for candidate in self.candidates]
+        swipe_ids = [swipe.candidate_id for swipe in self.swipes]
+        if len(set(candidate_ids)) != len(candidate_ids):
+            raise ValueError("candidate ids must be unique")
+        if len(set(swipe_ids)) != len(swipe_ids):
+            raise ValueError("each candidate must have exactly one swipe")
+        if set(candidate_ids) != set(swipe_ids):
+            raise ValueError("swipes must match the candidate ids")
+        return self
+
+
+class FinalizeRecommendationResponse(ApiModel):
+    recommended_design: RecommendedDesign
+
+
 class ProductChangeType(StrEnum):
     ADDED = "added"
     REPLACED = "replaced"
