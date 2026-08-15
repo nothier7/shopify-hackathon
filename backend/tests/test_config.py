@@ -6,6 +6,8 @@ def test_openai_defaults_use_current_flagship_models() -> None:
 
     assert settings.openai_image_model == "gpt-image-2"
     assert settings.openai_vision_model == "gpt-5.6-sol"
+    assert settings.openai_image_concurrency == 10
+    assert settings.room_image_max_bytes == 4_000_000
 
 
 def test_default_cors_origins_include_vite_development_server() -> None:

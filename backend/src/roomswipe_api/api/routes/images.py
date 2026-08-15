@@ -1,11 +1,12 @@
+from collections.abc import AsyncIterator
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
-from pydantic import ValidationError
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, ValidationError
 
+from roomswipe_api.config import get_settings
 from roomswipe_api.schemas import (
-    DesignCandidate,
-    FinalDesignManifest,
     Questionnaire,
     RecommendedDesign,
     RoomAnalysis,
@@ -17,6 +18,7 @@ from roomswipe_api.services.image_generation import (
 )
 
 router = APIRouter(prefix="/images", tags=["images — Urja"])
+STREAM_CHUNK_BYTES = 64 * 1024
 
 
 # full endpoint: /api/v1/images/analyze-room
@@ -32,7 +34,7 @@ async def analyze_room(image: Annotated[UploadFile, File(...)]) -> RoomAnalysis:
     try:
         return await OpenAIImageGenerationService().analyze_room(
             # read image
-            image=await image.read(),
+            image=await _read_room_image(image),
             content_type=image.content_type,
         )
     except ImageGenerationNotConfiguredError as exc:
@@ -44,12 +46,12 @@ async def analyze_room(image: Annotated[UploadFile, File(...)]) -> RoomAnalysis:
 
 
 # full endpoint: /api/v1/images/generate-designs
-@router.post("/generate-designs", response_model=list[DesignCandidate])
+@router.post("/generate-designs", response_model=None)
 async def generate_designs(
     image: Annotated[UploadFile, File(...)],
     questionnaire: Annotated[str, Form(...)],
     count: Annotated[int, Form(ge=1, le=10)] = 10,
-) -> list[DesignCandidate]:
+) -> StreamingResponse:
     if image.content_type not in {"image/jpeg", "image/png", "image/webp"}:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -63,12 +65,13 @@ async def generate_designs(
             detail="The questionnaire form field must contain valid questionnaire JSON.",
         ) from exc
     try:
-        return await OpenAIImageGenerationService().generate_designs(
-            image=await image.read(),
+        designs = await OpenAIImageGenerationService().generate_designs(
+            image=await _read_room_image(image),
             content_type=image.content_type,
             questionnaire=questionnaire_data,
             count=count,
         )
+        return _stream_models(designs)
     except ImageGenerationNotConfiguredError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
@@ -77,11 +80,11 @@ async def generate_designs(
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
 
-@router.post("/generate-final", response_model=FinalDesignManifest)
+@router.post("/generate-final", response_model=None)
 async def generate_final_design(
     image: Annotated[UploadFile, File(...)],
     recommended_design: Annotated[str, Form(...)],
-) -> FinalDesignManifest:
+) -> StreamingResponse:
     if image.content_type not in {"image/jpeg", "image/png", "image/webp"}:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -98,14 +101,38 @@ async def generate_final_design(
             ),
         ) from exc
     try:
-        return await OpenAIImageGenerationService().generate_final_design(
-            image=await image.read(),
+        manifest = await OpenAIImageGenerationService().generate_final_design(
+            image=await _read_room_image(image),
             content_type=image.content_type,
             recommendation=recommendation,
         )
+        return _stream_models(manifest)
     except ImageGenerationNotConfiguredError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
         ) from exc
     except ImageGenerationError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+
+async def _read_room_image(image: UploadFile) -> bytes:
+    content = await image.read()
+    if len(content) > get_settings().room_image_max_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="Choose a room image smaller than 4MB.",
+        )
+    return content
+
+
+def _stream_models(value: BaseModel | list[BaseModel]) -> StreamingResponse:
+    if isinstance(value, list):
+        payload = "[" + ",".join(model.model_dump_json(by_alias=True) for model in value) + "]"
+    else:
+        payload = value.model_dump_json(by_alias=True)
+
+    async def chunks() -> AsyncIterator[str]:
+        for offset in range(0, len(payload), STREAM_CHUNK_BYTES):
+            yield payload[offset : offset + STREAM_CHUNK_BYTES]
+
+    return StreamingResponse(chunks(), media_type="application/json")

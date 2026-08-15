@@ -1,5 +1,6 @@
 """OpenAI-backed room analysis and room-concept image generation."""
 
+import asyncio
 import base64
 import json
 import random
@@ -192,10 +193,13 @@ class OpenAIImageGenerationService:
         questionnaire: Questionnaire,
         count: int,
     ) -> list[DesignCandidate]:
-        return [
-            await self._edit_style(image, content_type, questionnaire, style)
-            for style in choose_styles(count)
-        ]
+        semaphore = asyncio.Semaphore(self.settings.openai_image_concurrency)
+
+        async def edit_style(style: Style) -> DesignCandidate:
+            async with semaphore:
+                return await self._edit_style(image, content_type, questionnaire, style)
+
+        return await asyncio.gather(*(edit_style(style) for style in choose_styles(count)))
 
     async def generate_final_design(
         self,

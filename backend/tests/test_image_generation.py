@@ -1,10 +1,13 @@
+import asyncio
 import json
 import random
 
 import httpx
+import pytest
 
 from roomswipe_api.config import Settings
 from roomswipe_api.schemas import Questionnaire, RecommendedDesign, RoomAnalysis
+from roomswipe_api.services import image_generation
 from roomswipe_api.services.image_generation import (
     STYLES,
     OpenAIImageGenerationService,
@@ -64,6 +67,58 @@ async def test_generate_designs_maps_image_and_frontend_metadata() -> None:
     assert designs[0].items
     assert 0 <= designs[0].warmth <= 1
     assert designs[0].questionnaire == questionnaire
+
+
+async def test_generate_designs_runs_ten_edits_concurrently_and_preserves_order(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    selected_styles = list(STYLES)
+    monkeypatch.setattr(
+        image_generation,
+        "choose_styles",
+        lambda count: selected_styles[:count],
+    )
+    active_requests = 0
+    peak_requests = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal active_requests, peak_requests
+        request_data = json.loads(request.content)
+        prompt = request_data["prompt"]
+        style_index, style = next(
+            (index, style)
+            for index, style in enumerate(selected_styles)
+            if style.name in prompt
+        )
+        active_requests += 1
+        peak_requests = max(peak_requests, active_requests)
+        try:
+            await asyncio.sleep((len(selected_styles) - style_index) / 1_000)
+            return httpx.Response(200, json={"data": [{"b64_json": style.name}]})
+        finally:
+            active_requests -= 1
+
+    service = OpenAIImageGenerationService(
+        Settings(openai_api_key="test-key", openai_image_concurrency=10),
+        transport=httpx.MockTransport(handler),
+    )
+
+    designs = await service.generate_designs(
+        image=b"empty-room",
+        content_type="image/jpeg",
+        questionnaire=Questionnaire(
+            room_type="living room",
+            budget_minor=100_000,
+            effort="buy_only",
+            design_density="minimalist",
+            user_age=28,
+            goals=["more seating"],
+        ),
+        count=10,
+    )
+
+    assert peak_requests == 10
+    assert [design.name for design in designs] == [style.name for style in selected_styles]
 
 
 async def test_generate_final_design_uses_ml_description_and_returns_manifest() -> None:
