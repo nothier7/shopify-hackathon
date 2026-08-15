@@ -44,7 +44,7 @@ class RoomAnalysis(ApiModel):
 class DesignCandidate(ApiModel):
     id: str
     name: str
-    image_url: str
+    image_url: str | None = None
     attributes: dict[str, float]
 
 
