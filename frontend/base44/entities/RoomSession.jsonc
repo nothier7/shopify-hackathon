@@ -1,0 +1,61 @@
+{
+  "name": "RoomSession",
+  "type": "object",
+  "properties": {
+    "room_type": {
+      "type": "string"
+    },
+    "budget": {
+      "type": "string"
+    },
+    "budget_value": {
+      "type": "number"
+    },
+    "age": {
+      "type": "string"
+    },
+    "goal": {
+      "type": "string"
+    },
+    "style_preferences": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "photo_url": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "questionnaire",
+        "uploading",
+        "swiping",
+        "final",
+        "iterating",
+        "products",
+        "complete"
+      ],
+      "default": "questionnaire"
+    },
+    "style_profile": {
+      "type": "object"
+    },
+    "final_look_url": {
+      "type": "string"
+    },
+    "final_look_description": {
+      "type": "string"
+    },
+    "final_look_prompt": {
+      "type": "string"
+    },
+    "product_intents": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}
