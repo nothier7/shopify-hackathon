@@ -1,0 +1,12 @@
+1. Randomly choose 10 styles 
+
+2. Get images of room decorated with those styles 
+
+3. Send info of those images (warmth, style name, lighting, items in room) to frontend to display 
+
+FE gives me the user feedback on each room 
+
+4. Send Nikita room_name + room_desc + room_items + room_feedback in a JSON
+
+______
+GENERATE NEW IMAGE AND SEND TO THIERO
