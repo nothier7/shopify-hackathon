@@ -19,7 +19,7 @@ src/roomswipe_api/
 - **Nikita:** `api/routes/recommendations.py` and `services/recommendation.py`
 - **Thierno:** `api/routes/commerce.py`, `services/shopify_ucp.py`, and cross-service integration
 
-The feature routes intentionally return HTTP `501` until their owner connects an implementation. This keeps the OpenAPI contract usable without shipping fake behavior.
+The image-generation and recommendation routes remain service contracts until their owners connect implementations. The commerce routes call Shopify Global Catalog MCP and merchant Cart MCP directly.
 
 ## Setup
 
@@ -51,3 +51,5 @@ ruff check .
 - `POST /api/v1/recommendations/select-products`
 - `POST /api/v1/commerce/search`
 - `POST /api/v1/commerce/carts`
+
+`commerce/search` accepts Urja's final-image product manifest and returns live offers grouped by `slotId`. Send Nikita's selected offers to `commerce/carts`; the response contains one cart and `continueUrl` per merchant, plus independent merchant failures.

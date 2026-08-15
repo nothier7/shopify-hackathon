@@ -4,6 +4,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 # valid JSON
 
+# valid JSON
+
 
 def to_camel(value: str) -> str:
     first, *rest = value.split("_")
@@ -29,11 +31,19 @@ class DesignDensity(StrEnum):
     MAXIMALIST = "maximalist"
 
 
+class DesignDensity(StrEnum):
+    MINIMALIST = "minimalist"
+    MAXIMALIST = "maximalist"
+
+
 class Questionnaire(ApiModel):
     room_type: str
     budget_minor: int = Field(ge=0)
     currency: str = Field(default="USD", min_length=3, max_length=3)
     effort: EffortLevel
+    design_density: DesignDensity
+    user_age: int = Field(ge=0, le=120)
+    goals: list[str] = Field(default_factory=list)
     design_density: DesignDensity
     user_age: int = Field(ge=0, le=120)
     goals: list[str] = Field(default_factory=list)
