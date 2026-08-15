@@ -10,7 +10,15 @@ from uuid import uuid4
 import httpx
 
 from roomswipe_api.config import Settings, get_settings
-from roomswipe_api.schemas import DesignCandidate, PreferenceProfile, Questionnaire, RoomAnalysis
+from roomswipe_api.schemas import (
+    DesignCandidate,
+    FinalDesignManifest,
+    ProductChangeType,
+    ProductSlot,
+    Questionnaire,
+    RecommendedDesign,
+    RoomAnalysis,
+)
 
 
 class ImageGenerationService(Protocol):
@@ -24,8 +32,12 @@ class ImageGenerationService(Protocol):
         count: int,
     ) -> list[DesignCandidate]: ...
     async def generate_final_design(
-        self, *, room: RoomAnalysis, profile: PreferenceProfile, refinement: str | None = None
-    ) -> DesignCandidate: ...
+        self,
+        *,
+        image: bytes,
+        content_type: str,
+        recommendation: RecommendedDesign,
+    ) -> FinalDesignManifest: ...
 
 
 class ImageGenerationError(RuntimeError):
@@ -186,24 +198,30 @@ class OpenAIImageGenerationService:
         ]
 
     async def generate_final_design(
-        self, *, room: RoomAnalysis, profile: PreferenceProfile, refinement: str | None = None
-    ) -> DesignCandidate:
-        style = Style(
-            "Personalized room concept",
-            profile.attributes.get("warmth", 0.5),
-            room.lighting,
-            tuple(room.existing_furniture),
-            profile.attributes,
+        self,
+        *,
+        image: bytes,
+        content_type: str,
+        recommendation: RecommendedDesign,
+    ) -> FinalDesignManifest:
+        self._require_key()
+        image_url = f"data:{content_type};base64,{base64.b64encode(image).decode('ascii')}"
+        response = await self._post(
+            "/images/edits",
+            {
+                "model": self.settings.openai_image_model or "gpt-image-1.5",
+                "images": [{"image_url": image_url}],
+                "prompt": _final_room_edit_prompt(recommendation),
+                "input_fidelity": "high",
+                "size": "1536x1024",
+                "quality": "medium",
+                "output_format": "png",
+            },
         )
-        questionnaire = Questionnaire(
-            room_type=room.room_type,
-            budget_minor=0,
-            effort="buy_only",
-            design_density="minimalist",
-            user_age=18,
-            goals=[refinement or "Create a final concept matching the swipe preferences"],
+        return build_final_design_manifest(
+            final_image_url=_image_url_from_response(response),
+            recommendation=recommendation,
         )
-        return await self._generate_style(room, questionnaire, style)
 
     async def _edit_style(
         self, image: bytes, content_type: str, questionnaire: Questionnaire, style: Style
@@ -220,21 +238,6 @@ class OpenAIImageGenerationService:
                 "size": "1536x1024",
                 "quality": "medium",
                 "output_format": "png",
-            },
-        )
-        return _candidate_from_response(response, style, questionnaire)
-
-    async def _generate_style(
-        self, room: RoomAnalysis, questionnaire: Questionnaire, style: Style
-    ) -> DesignCandidate:
-        self._require_key()
-        response = await self._post(
-            "/images/generations",
-            {
-                "model": self.settings.openai_image_model or "gpt-image-1.5",
-                "prompt": _design_prompt(room, questionnaire, style),
-                "size": "1536x1024",
-                "quality": "medium",
             },
         )
         return _candidate_from_response(response, style, questionnaire)
@@ -276,21 +279,47 @@ def _response_text(response: dict[str, Any]) -> str:
 def _candidate_from_response(
     response: dict[str, Any], style: Style, questionnaire: Questionnaire
 ) -> DesignCandidate:
-    try:
-        image_data = response["data"][0]
-        encoded = image_data.get("b64_json")
-        image_url = f"data:image/png;base64,{encoded}" if encoded else image_data["url"]
-    except (IndexError, KeyError, TypeError) as exc:
-        raise ImageGenerationError("OpenAI returned an image in an unexpected format.") from exc
     return DesignCandidate(
         id=str(uuid4()),
         name=style.name,
-        image_url=image_url,
+        image_url=_image_url_from_response(response),
         attributes=style.attributes,
         warmth=style.warmth,
         lighting=style.lighting,
         items=list(style.items),
         questionnaire=questionnaire,
+    )
+
+
+def _image_url_from_response(response: dict[str, Any]) -> str:
+    try:
+        image_data = response["data"][0]
+        encoded = image_data.get("b64_json")
+        return f"data:image/png;base64,{encoded}" if encoded else image_data["url"]
+    except (IndexError, KeyError, TypeError) as exc:
+        raise ImageGenerationError("OpenAI returned an image in an unexpected format.") from exc
+
+
+def build_final_design_manifest(
+    *,
+    final_image_url: str,
+    recommendation: RecommendedDesign,
+) -> FinalDesignManifest:
+    confidence = recommendation.match_percent / 100
+    return FinalDesignManifest(
+        final_image_url=final_image_url,
+        product_slots=[
+            ProductSlot(
+                id=f"item-{index}",
+                category=item.name,
+                search_query=item.description,
+                change_type=ProductChangeType.ADDED,
+                must_match=[item.name],
+                budget_weight=max(1, item.max_price_minor),
+                confidence=confidence,
+            )
+            for index, item in enumerate(recommendation.items, start=1)
+        ],
     )
 
 
@@ -324,4 +353,21 @@ def _room_edit_prompt(questionnaire: Questionnaire, style: Style) -> str:
         f"Include {', '.join(style.items)} and use {style.lighting}. Return one coherent, "
         "realistic redesigned version of this same room. Do not include people, text, labels, "
         "collages, or watermarks."
+    )
+
+
+def _final_room_edit_prompt(recommendation: RecommendedDesign) -> str:
+    items = "; ".join(
+        f"{item.name}: {item.description}" for item in recommendation.items
+    )
+    budget = recommendation.budget.max_total_minor / 100
+    return (
+        "Use the uploaded room photo as the exact starting point. Preserve its architecture, "
+        "room dimensions, windows, doors, fixed features, camera angle, and perspective. "
+        f"Create the personalized design named {recommendation.name}. "
+        f"Design direction: {recommendation.description}. Include these purchasable items: "
+        f"{items}. Keep the furnishing plan realistic for a maximum budget of "
+        f"{budget:.2f} {recommendation.budget.currency}. Return one coherent photorealistic "
+        "redesign of this same room. Do not include people, text, labels, collages, or "
+        "watermarks."
     )
