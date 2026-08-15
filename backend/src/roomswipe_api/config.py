@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     openai_api_key: str | None = None
     openai_image_model: str | None = None
+    openai_vision_model: str = "gpt-4.1-mini"
 
     shopify_agent_profile_url: str | None = None
     shopify_global_catalog_mcp_url: str = "https://catalog.shopify.com/api/ucp/mcp"

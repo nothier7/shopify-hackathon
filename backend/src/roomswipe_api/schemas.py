@@ -2,6 +2,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
+# valid JSON
+
 
 def to_camel(value: str) -> str:
     first, *rest = value.split("_")
@@ -22,12 +24,19 @@ class EffortLevel(StrEnum):
     MAJOR_CHANGES = "major_changes"
 
 
+class DesignDensity(StrEnum):
+    MINIMALIST = "minimalist"
+    MAXIMALIST = "maximalist"
+
+
 class Questionnaire(ApiModel):
     room_type: str
     budget_minor: int = Field(ge=0)
     currency: str = Field(default="USD", min_length=3, max_length=3)
     effort: EffortLevel
-    goals: list[str]
+    design_density: DesignDensity
+    user_age: int = Field(ge=0, le=120)
+    goals: list[str] = Field(default_factory=list)
     optional_styles: list[str] = Field(default_factory=list)
 
 
@@ -46,6 +55,10 @@ class DesignCandidate(ApiModel):
     name: str
     image_url: str
     attributes: dict[str, float]
+    warmth: float = Field(ge=0, le=1)
+    lighting: str
+    items: list[str]
+    questionnaire: Questionnaire
 
 
 class SwipeEvent(ApiModel):
@@ -91,12 +104,6 @@ class MerchantCart(ApiModel):
     subtotal_minor: int = Field(ge=0)
     currency: str = Field(min_length=3, max_length=3)
     continue_url: str
-
-
-class GenerateDesignsRequest(ApiModel):
-    room: RoomAnalysis
-    questionnaire: Questionnaire
-    count: int = Field(default=6, ge=1, le=10)
 
 
 class UpdatePreferencesRequest(ApiModel):
