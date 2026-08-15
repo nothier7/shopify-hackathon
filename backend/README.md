@@ -48,8 +48,11 @@ ruff check .
 - `POST /api/v1/images/analyze-room`
 - `POST /api/v1/images/generate-designs`
 - `POST /api/v1/recommendations/preferences`
+- `POST /api/v1/recommendations/finalize`
 - `POST /api/v1/recommendations/select-products`
 - `POST /api/v1/commerce/search`
 - `POST /api/v1/commerce/carts`
 
 `commerce/search` accepts Urja's final-image product manifest and returns live offers grouped by `slotId`. Send Nikita's selected offers to `commerce/carts`; the response contains one cart and `continueUrl` per merchant, plus independent merchant failures.
+
+`recommendations/finalize` accepts exactly ten generated design candidates and one swipe per candidate. It runs the shared ML recommendation model and returns the recommended design with budget-capped product descriptions for the Shopify manifest adapter.

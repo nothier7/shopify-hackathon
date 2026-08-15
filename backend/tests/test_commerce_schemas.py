@@ -1,7 +1,13 @@
 import pytest
 from pydantic import ValidationError
 
-from roomswipe_api.schemas import BoundingBox, SearchProductsRequest
+from roomswipe_api.schemas import (
+    BoundingBox,
+    CreateCartsResponse,
+    PreferenceProfile,
+    SearchProductsRequest,
+    SwipeEvent,
+)
 
 
 def search_payload() -> dict[str, object]:
@@ -67,3 +73,40 @@ def test_manifest_requires_at_least_one_product_slot() -> None:
 
     with pytest.raises(ValidationError):
         SearchProductsRequest.model_validate(payload)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("country", "CA", "only US delivery is supported"),
+        ("currency", "CAD", "only USD budgets are supported"),
+    ],
+)
+def test_search_is_scoped_to_us_delivery_and_usd_budget(
+    field: str,
+    value: str,
+    message: str,
+) -> None:
+    payload = search_payload()
+    payload[field] = value
+
+    with pytest.raises(ValidationError, match=message):
+        SearchProductsRequest.model_validate(payload)
+
+
+def test_shared_recommendation_and_cart_contracts_are_available() -> None:
+    swipe = SwipeEvent(candidateId="design-1", liked=True, comment="more wood")
+    profile = PreferenceProfile(
+        attributes={"material:wood": 0.8},
+        confidence=0.5,
+        likedSignals=["material:wood"],
+        dislikedSignals=[],
+        modelVersion=2,
+        positiveCount=1,
+        negativeCount=1,
+    )
+    carts = CreateCartsResponse(carts=[], failures=[])
+
+    assert swipe.comment == "more wood"
+    assert profile.model_version == 2
+    assert carts.failures == []
