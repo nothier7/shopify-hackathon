@@ -83,3 +83,74 @@ async def test_finalize_recommendation_maps_ml_contract_errors_to_validation() -
     assert response.json()["detail"] == (
         "all 10 candidates must contain the same questionnaire"
     )
+
+
+async def test_preferences_learns_from_frontend_swipes() -> None:
+    payload = recommendation_request()
+    transport = ASGITransport(app=app)
+
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            "/api/v1/recommendations/preferences",
+            json={
+                "candidates": payload["candidates"],
+                "swipes": payload["swipes"],
+            },
+        )
+
+    assert response.status_code == 200
+    profile = response.json()
+    assert profile["positiveCount"] + profile["negativeCount"] == 10
+    assert profile["confidence"] > 0
+    assert profile["modelVersion"] == 10
+
+
+async def test_select_products_ranks_one_offer_per_slot_under_budget() -> None:
+    offers = [
+        _offer("sofa-best", "sofa-slot", 12_000, 0.9),
+        _offer("sofa-backup", "sofa-slot", 10_000, 0.2),
+        _offer("lamp-best", "lamp-slot", 15_000, 0.8),
+    ]
+    transport = ASGITransport(app=app)
+
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            "/api/v1/recommendations/select-products",
+            json={
+                "profile": {
+                    "attributes": {},
+                    "confidence": 0.8,
+                    "likedSignals": [],
+                    "dislikedSignals": [],
+                },
+                "offers": offers,
+                "budgetMinor": 30_000,
+            },
+        )
+
+    assert response.status_code == 200
+    selected = response.json()
+    assert [offer["productId"] for offer in selected] == ["sofa-best", "lamp-best"]
+    assert sum(offer["priceMinor"] for offer in selected) <= 30_000
+
+
+def _offer(
+    product_id: str,
+    slot_id: str,
+    price_minor: int,
+    match_score: float,
+) -> dict[str, Any]:
+    return {
+        "productId": product_id,
+        "variantId": f"{product_id}-variant",
+        "slotId": slot_id,
+        "title": product_id.replace("-", " ").title(),
+        "merchantName": "Demo Merchant",
+        "merchantDomain": "demo.example.com",
+        "priceMinor": price_minor,
+        "currency": "USD",
+        "imageUrl": "https://images.example.com/product.jpg",
+        "checkoutUrl": "https://demo.example.com/products/item",
+        "available": True,
+        "matchScore": match_score,
+    }

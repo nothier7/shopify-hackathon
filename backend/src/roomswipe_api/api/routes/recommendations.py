@@ -38,18 +38,24 @@ def finalize_recommendation(
 
 
 @router.post("/preferences", response_model=PreferenceProfile)
-async def update_preferences(request: UpdatePreferencesRequest) -> PreferenceProfile:
-    del request
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Recommendation service is not connected yet.",
+async def update_preferences(
+    request: UpdatePreferencesRequest,
+    service: RecommendationEngine,
+) -> PreferenceProfile:
+    return service.update_preferences(
+        candidates=request.candidates,
+        swipes=request.swipes,
+        prior=request.prior,
     )
 
 
 @router.post("/select-products", response_model=list[ProductOffer])
-async def select_products(request: SelectProductsRequest) -> list[ProductOffer]:
-    del request
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Product ranking service is not connected yet.",
+async def select_products(
+    request: SelectProductsRequest,
+    service: RecommendationEngine,
+) -> list[ProductOffer]:
+    return service.rank_and_optimize(
+        profile=request.profile,
+        offers=request.offers,
+        budget_minor=request.budget_minor,
     )
