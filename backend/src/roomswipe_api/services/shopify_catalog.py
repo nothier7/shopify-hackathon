@@ -12,6 +12,8 @@ from roomswipe_api.services.reference_images import (
 )
 from roomswipe_api.services.shopify_mcp import ShopifyMcpClient
 
+MIN_UPSTREAM_CANDIDATES = 5
+
 
 class ProductOfferUnavailable(RuntimeError):
     pass
@@ -111,53 +113,50 @@ class ShopifyCatalogService:
         limit: int,
     ) -> list[ProductOffer]:
         image = self._optional_crop(slot, image_bytes)
-        detailed_query = self._query_for(slot, include_soft_preferences=True)
-        content = await self._search_catalog(
-            query=detailed_query,
-            image=image,
-            max_price_minor=max_price_minor,
-            currency=currency,
-            country=country,
-            region=region,
-            postal_code=postal_code,
-            limit=limit,
-        )
-        products = content.get("products")
-        relaxed_preferences: list[str] = []
-
-        if not isinstance(products, list) or not products:
-            relaxed_preferences = self._soft_preference_names(slot)
-            if relaxed_preferences:
-                content = await self._search_catalog(
-                    query=self._query_for(slot, include_soft_preferences=False),
-                    image=image,
-                    max_price_minor=max_price_minor,
-                    currency=currency,
-                    country=country,
-                    region=region,
-                    postal_code=postal_code,
-                    limit=limit,
-                )
-                products = content.get("products")
-
-        if not isinstance(products, list):
-            return []
-
+        upstream_limit = max(MIN_UPSTREAM_CANDIDATES, limit)
         offers: list[ProductOffer] = []
-        for product in products:
-            if not isinstance(product, Mapping):
+        seen_variants: set[tuple[str, str]] = set()
+        seen_descriptions: set[str] = set()
+
+        for query, relaxed_preferences in self._query_stages(slot):
+            content = await self._search_catalog(
+                query=query,
+                image=image,
+                max_price_minor=max_price_minor,
+                currency=currency,
+                country=country,
+                region=region,
+                postal_code=postal_code,
+                limit=upstream_limit,
+            )
+            products = content.get("products")
+            if not isinstance(products, list):
                 continue
-            offer = self._normalize_product(
-                product,
+
+            stage_offers = self._normalize_products(
+                products,
                 slot_id=slot.id,
                 max_price_minor=max_price_minor,
+                requested_currency=currency,
                 relaxed_preferences=relaxed_preferences,
             )
-            if offer is not None:
+            for offer in stage_offers:
+                identity = (offer.product_id, offer.variant_id)
+                description_key = self._description_key(offer)
+                if identity in seen_variants or description_key in seen_descriptions:
+                    continue
+                seen_variants.add(identity)
+                seen_descriptions.add(description_key)
                 offers.append(offer)
-            if len(offers) == limit:
+
+            requested_currency_count = sum(
+                offer.currency.upper() == currency.upper() for offer in offers
+            )
+            if requested_currency_count >= limit:
                 break
-        return offers
+
+        offers.sort(key=lambda offer: offer.currency.upper() != currency.upper())
+        return offers[:limit]
 
     async def _search_catalog(
         self,
@@ -238,6 +237,37 @@ class ShopifyCatalogService:
                 parts.append(f"Shape: {slot.shape}")
         return ". ".join(parts)
 
+    @classmethod
+    def _query_stages(cls, slot: ProductSlot) -> list[tuple[str, list[str]]]:
+        soft_preferences = cls._soft_preference_names(slot)
+        candidates = [
+            (cls._query_for(slot, include_soft_preferences=True), []),
+            (
+                cls._query_for(slot, include_soft_preferences=False),
+                soft_preferences,
+            ),
+            (
+                cls._broad_query_for(slot),
+                [*soft_preferences, "descriptive wording"],
+            ),
+        ]
+
+        stages: list[tuple[str, list[str]]] = []
+        seen_queries: set[str] = set()
+        for query, relaxed_preferences in candidates:
+            if query in seen_queries:
+                continue
+            seen_queries.add(query)
+            stages.append((query, relaxed_preferences))
+        return stages
+
+    @staticmethod
+    def _broad_query_for(slot: ProductSlot) -> str:
+        parts = [slot.category]
+        if slot.must_match:
+            parts.append(f"Required: {', '.join(slot.must_match)}")
+        return ". ".join(parts)
+
     @staticmethod
     def _soft_preference_names(slot: ProductSlot) -> list[str]:
         return [
@@ -258,6 +288,7 @@ class ShopifyCatalogService:
         *,
         slot_id: str,
         max_price_minor: int,
+        requested_currency: str,
         relaxed_preferences: list[str],
     ) -> ProductOffer | None:
         product_id = product.get("id")
@@ -268,8 +299,8 @@ class ShopifyCatalogService:
         if not isinstance(variants, list):
             return None
 
-        eligible: list[tuple[int, Mapping[str, Any]]] = []
-        for variant in variants:
+        eligible: list[tuple[bool, int, int, Mapping[str, Any]]] = []
+        for index, variant in enumerate(variants):
             if not isinstance(variant, Mapping):
                 continue
             price = variant.get("price")
@@ -277,17 +308,27 @@ class ShopifyCatalogService:
             if not isinstance(price, Mapping) or not isinstance(availability, Mapping):
                 continue
             amount = price.get("amount")
+            variant_currency = price.get("currency")
             if (
                 isinstance(amount, int)
                 and not isinstance(amount, bool)
-                and amount <= max_price_minor
+                and isinstance(variant_currency, str)
                 and availability.get("available") is True
             ):
-                eligible.append((amount, variant))
+                currency_matches = variant_currency.upper() == requested_currency.upper()
+                if currency_matches and amount > max_price_minor:
+                    continue
+                eligible.append((not currency_matches, amount, index, variant))
 
         if not eligible:
             return None
-        price_minor, variant = min(eligible, key=lambda candidate: candidate[0])
+        _, price_minor, _, variant = min(
+            eligible,
+            key=lambda candidate: (
+                candidate[0],
+                candidate[1] if not candidate[0] else candidate[2],
+            ),
+        )
         price = variant["price"]
         seller = variant.get("seller")
         variant_id = variant.get("id")
@@ -308,6 +349,11 @@ class ShopifyCatalogService:
             variant_id=variant_id,
             slot_id=slot_id,
             title=title,
+            description=(
+                product.get("description")
+                if isinstance(product.get("description"), str)
+                else ""
+            ),
             merchant_name=merchant_name,
             merchant_domain=merchant_domain,
             price_minor=price_minor,
@@ -317,6 +363,40 @@ class ShopifyCatalogService:
             available=True,
             relaxed_preferences=relaxed_preferences,
         )
+
+    @classmethod
+    def _normalize_products(
+        cls,
+        products: list[Any],
+        *,
+        slot_id: str,
+        max_price_minor: int,
+        requested_currency: str,
+        relaxed_preferences: list[str],
+    ) -> list[ProductOffer]:
+        offers: list[ProductOffer] = []
+        for product in products:
+            if not isinstance(product, Mapping):
+                continue
+            offer = cls._normalize_product(
+                product,
+                slot_id=slot_id,
+                max_price_minor=max_price_minor,
+                requested_currency=requested_currency,
+                relaxed_preferences=relaxed_preferences,
+            )
+            if offer is not None:
+                offers.append(offer)
+
+        offers.sort(
+            key=lambda offer: offer.currency.upper() != requested_currency.upper()
+        )
+        return offers
+
+    @staticmethod
+    def _description_key(offer: ProductOffer) -> str:
+        value = offer.description or offer.title
+        return " ".join(value.casefold().split())
 
     @staticmethod
     def _image_url(item: Mapping[str, Any]) -> str | None:
@@ -361,6 +441,11 @@ class ShopifyCatalogService:
         return offer.model_copy(
             update={
                 "title": product.get("title", offer.title),
+                "description": (
+                    product.get("description")
+                    if isinstance(product.get("description"), str)
+                    else offer.description
+                ),
                 "merchant_name": merchant_name,
                 "merchant_domain": merchant_domain,
                 "price_minor": amount,

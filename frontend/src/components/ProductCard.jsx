@@ -24,7 +24,8 @@ export default function ProductCard({ product, onAddToCart, inCart }) {
         </div>
         <h3 className="font-display text-base mb-1 leading-snug">{product.title}</h3>
         <p className="text-xs text-muted-foreground mb-4 line-clamp-2 italic leading-relaxed">
-          {match == null ? 'Live Shopify catalog match' : `${match}% preference match`}
+          {product.description || 'Live Shopify catalog match'}
+          {match == null ? '' : ` · ${match}% preference match`}
           {product.relaxedPreferences?.length
             ? ` · Similar match with ${product.relaxedPreferences.join(', ')} relaxed`
             : ''}

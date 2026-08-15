@@ -143,6 +143,7 @@ class MlRecommendationService:
             variant_id=offer.variant_id,
             slot_id=offer.slot_id,
             title=offer.title,
+            description=offer.description,
             merchant_name=offer.merchant_name,
             merchant_domain=offer.merchant_domain,
             price_minor=offer.price_minor,

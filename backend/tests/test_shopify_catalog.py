@@ -58,6 +58,7 @@ def catalog_product() -> dict[str, Any]:
     return {
         "id": "gid://shopify/p/lamp",
         "title": "Venice Antique Brass Arc Floor Lamp",
+        "description": "An arched antique brass floor lamp with a marble base.",
         "media": [{"type": "image", "url": "https://cdn.example.com/lamp.jpg"}],
         "variants": [
             {
@@ -94,7 +95,7 @@ async def test_search_uses_multimodal_catalog_filters_and_normalizes_offer() -> 
         country="US",
         region="NY",
         postal_code="10001",
-        candidates_per_slot=3,
+        candidates_per_slot=1,
     )
 
     catalog = mcp.calls[0]["arguments"]["catalog"]
@@ -108,6 +109,7 @@ async def test_search_uses_multimodal_catalog_filters_and_normalizes_offer() -> 
         "price": {"max": 30_000},
     }
     assert catalog["view"] == "offer"
+    assert catalog["pagination"] == {"limit": 5}
     assert offers[0].variant_id == "gid://shopify/ProductVariant/lamp"
     assert offers[0].merchant_domain == "lamp-shop.myshopify.com"
     assert offers[0].price_minor == 17_999
@@ -127,6 +129,7 @@ async def test_search_relaxes_soft_preferences_after_empty_result() -> None:
         budget_minor=30_000,
         currency="USD",
         country="US",
+        candidates_per_slot=1,
     )
 
     assert len(mcp.calls) == 2
@@ -134,6 +137,127 @@ async def test_search_relaxes_soft_preferences_after_empty_result() -> None:
     assert "Colors:" not in mcp.calls[1]["arguments"]["catalog"]["query"]
     assert "like" not in mcp.calls[1]["arguments"]["catalog"]
     assert offers[0].relaxed_preferences == ["colors", "materials", "styles", "shape"]
+
+
+async def test_search_falls_back_when_raw_products_are_not_usable() -> None:
+    over_budget = catalog_product()
+    over_budget["variants"] = [over_budget["variants"][0]]
+    mcp = StubMcpClient(
+        [{"products": [over_budget]}, {"products": [catalog_product()]}]
+    )
+    service = ShopifyCatalogService(
+        mcp_client=mcp,  # type: ignore[arg-type]
+        image_service=StubImageService(),  # type: ignore[arg-type]
+        catalog_endpoint="https://catalog.shopify.com/api/ucp/mcp",
+    )
+
+    offers = await service.search_offers(
+        manifest=manifest(with_box=False),
+        budget_minor=30_000,
+        currency="USD",
+        country="US",
+        candidates_per_slot=1,
+    )
+
+    assert len(mcp.calls) == 2
+    assert offers[0].variant_id == "gid://shopify/ProductVariant/lamp"
+    assert offers[0].relaxed_preferences == ["colors", "materials", "styles", "shape"]
+
+
+async def test_search_uses_broad_category_fallback_and_marks_it() -> None:
+    mcp = StubMcpClient(
+        [{"products": []}, {"products": []}, {"products": [catalog_product()]}]
+    )
+    service = ShopifyCatalogService(
+        mcp_client=mcp,  # type: ignore[arg-type]
+        image_service=StubImageService(),  # type: ignore[arg-type]
+        catalog_endpoint="https://catalog.shopify.com/api/ucp/mcp",
+    )
+
+    offers = await service.search_offers(
+        manifest=manifest(with_box=False),
+        budget_minor=30_000,
+        currency="USD",
+        country="US",
+        candidates_per_slot=1,
+    )
+
+    assert len(mcp.calls) == 3
+    assert mcp.calls[2]["arguments"]["catalog"]["query"] == (
+        "floor lamp. Required: floor lamp"
+    )
+    assert offers[0].relaxed_preferences == [
+        "colors",
+        "materials",
+        "styles",
+        "shape",
+        "descriptive wording",
+    ]
+
+
+async def test_search_deduplicates_products_with_the_same_description() -> None:
+    first = catalog_product()
+    duplicate = catalog_product()
+    duplicate["id"] = "gid://shopify/p/duplicate-lamp"
+    duplicate["title"] = "A Different Product Title"
+    duplicate["description"] = "  AN ARCHED ANTIQUE BRASS FLOOR LAMP WITH A MARBLE BASE. "
+    duplicate["variants"] = [
+        {
+            **duplicate["variants"][1],
+            "id": "gid://shopify/ProductVariant/duplicate-lamp",
+        }
+    ]
+    responses = [
+        {"products": [first, duplicate]},
+        {"products": [first, duplicate]},
+        {"products": [first, duplicate]},
+    ]
+    service = ShopifyCatalogService(
+        mcp_client=StubMcpClient(responses),  # type: ignore[arg-type]
+        image_service=StubImageService(),  # type: ignore[arg-type]
+        catalog_endpoint="https://catalog.shopify.com/api/ucp/mcp",
+    )
+
+    offers = await service.search_offers(
+        manifest=manifest(with_box=False),
+        budget_minor=30_000,
+        currency="USD",
+        country="US",
+        candidates_per_slot=2,
+    )
+
+    assert len(offers) == 1
+    assert offers[0].product_id == "gid://shopify/p/lamp"
+
+
+async def test_search_prioritizes_usd_over_native_currency_offer() -> None:
+    cad_product = catalog_product()
+    cad_product["id"] = "gid://shopify/p/cad-lamp"
+    cad_product["description"] = "A distinct Canadian lamp."
+    cad_product["variants"] = [
+        {
+            **cad_product["variants"][1],
+            "id": "gid://shopify/ProductVariant/cad-lamp",
+            "price": {"amount": 24_000, "currency": "CAD"},
+        }
+    ]
+    mcp = StubMcpClient([{"products": [cad_product, catalog_product()]}])
+    service = ShopifyCatalogService(
+        mcp_client=mcp,  # type: ignore[arg-type]
+        image_service=StubImageService(),  # type: ignore[arg-type]
+        catalog_endpoint="https://catalog.shopify.com/api/ucp/mcp",
+    )
+
+    offers = await service.search_offers(
+        manifest=manifest(with_box=False),
+        budget_minor=30_000,
+        currency="USD",
+        country="US",
+        candidates_per_slot=1,
+    )
+
+    assert offers[0].currency == "USD"
+    assert offers[0].product_id == "gid://shopify/p/lamp"
 
 
 def test_budget_is_allocated_proportionally() -> None:

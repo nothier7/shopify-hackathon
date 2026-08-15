@@ -172,6 +172,7 @@ class ProductOffer(ApiModel):
     variant_id: str
     slot_id: str
     title: str
+    description: str = ""
     merchant_name: str
     merchant_domain: str
     price_minor: int = Field(ge=0)
