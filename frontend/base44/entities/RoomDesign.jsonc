@@ -1,0 +1,36 @@
+{
+  "name": "RoomDesign",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "style_name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "image_prompt": {
+      "type": "string"
+    },
+    "style_metadata": {
+      "type": "object"
+    },
+    "swipe_result": {
+      "type": "string",
+      "enum": [
+        "like",
+        "pass",
+        "pending"
+      ],
+      "default": "pending"
+    },
+    "order_index": {
+      "type": "number"
+    }
+  }
+}

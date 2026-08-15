@@ -3,6 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+# valid JSON
+
 
 def to_camel(value: str) -> str:
     first, *rest = value.split("_")
@@ -23,12 +25,19 @@ class EffortLevel(StrEnum):
     MAJOR_CHANGES = "major_changes"
 
 
+class DesignDensity(StrEnum):
+    MINIMALIST = "minimalist"
+    MAXIMALIST = "maximalist"
+
+
 class Questionnaire(ApiModel):
     room_type: str
     budget_minor: int = Field(ge=0)
     currency: str = Field(default="USD", min_length=3, max_length=3)
     effort: EffortLevel
-    goals: list[str]
+    design_density: DesignDensity
+    user_age: int = Field(ge=0, le=120)
+    goals: list[str] = Field(default_factory=list)
     optional_styles: list[str] = Field(default_factory=list)
 
 
@@ -47,6 +56,10 @@ class DesignCandidate(ApiModel):
     name: str
     image_url: str
     attributes: dict[str, float]
+    warmth: float = Field(ge=0, le=1)
+    lighting: str
+    items: list[str]
+    questionnaire: Questionnaire
 
 
 class SwipeEvent(ApiModel):
@@ -65,26 +78,7 @@ class PreferenceProfile(ApiModel):
     negative_count: int = Field(default=0, ge=0)
 
 
-class FinalRecommendationQuestionnaire(ApiModel):
-    room_type: str
-    budget_minor: int = Field(ge=0)
-    currency: str = Field(default="USD", min_length=3, max_length=3)
-    effort: EffortLevel
-    design_density: str
-    user_age: int = Field(ge=0)
-    goals: list[str]
-    optional_styles: list[str] = Field(default_factory=list)
-
-
-class FinalRecommendationCandidate(ApiModel):
-    id: str
-    name: str
-    image_url: str
-    attributes: dict[str, float]
-    warmth: float = Field(ge=0, le=1)
-    lighting: str
-    items: list[str] = Field(min_length=1)
-    questionnaire: FinalRecommendationQuestionnaire
+class FinalRecommendationCandidate(DesignCandidate):
     comment: str | None = None
     like: Literal["Yes", "No"]
 
@@ -201,17 +195,6 @@ class MerchantCartFailure(ApiModel):
 class CreateCartsResponse(ApiModel):
     carts: list[MerchantCart]
     failures: list[MerchantCartFailure]
-
-
-class GenerateDesignsRequest(ApiModel):
-    room: RoomAnalysis
-    questionnaire: Questionnaire
-    count: int = Field(default=6, ge=1, le=10)
-
-
-class GenerateFinalDesignRequest(ApiModel):
-    room: RoomAnalysis
-    recommendation: RecommendedDesign
 
 
 class UpdatePreferencesRequest(ApiModel):

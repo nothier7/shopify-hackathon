@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from roomswipe_api.schemas import (
     FinalDesignManifest,
     FinalRecommendationCandidate,
-    RoomAnalysis,
 )
 from roomswipe_api.services.image_generation import ImageGenerationService
 from roomswipe_api.services.recommendation import RecommendationService
@@ -26,11 +25,13 @@ class RoomSwipeOrchestrator:
     async def generate_recommended_room(
         self,
         *,
-        room: RoomAnalysis,
+        image: bytes,
+        content_type: str,
         candidates: list[FinalRecommendationCandidate],
     ) -> FinalDesignManifest:
         recommendation = self.services.recommendations.recommend_final_design(candidates=candidates)
         return await self.services.images.generate_final_design(
-            room=room,
+            image=image,
+            content_type=content_type,
             recommendation=recommendation.recommended_design,
         )

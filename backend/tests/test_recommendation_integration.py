@@ -8,10 +8,9 @@ from roomswipe_api.main import app
 from roomswipe_api.schemas import (
     FinalDesignManifest,
     FinalRecommendationCandidate,
-    GenerateFinalDesignRequest,
     ProductChangeType,
     ProductSlot,
-    RoomAnalysis,
+    RecommendedDesign,
 )
 from roomswipe_api.services.orchestrator import RoomSwipeOrchestrator, RoomSwipeServices
 from roomswipe_api.services.recommendation import LocalRecommendationService
@@ -59,6 +58,19 @@ async def test_preference_and_product_selection_routes_use_ml_service() -> None:
                 "name": "Warm room",
                 "imageUrl": "https://images.example.com/warm.jpg",
                 "attributes": {"style:warm": 1, "material:wood": 1},
+                "warmth": 1,
+                "lighting": "warm lamps",
+                "items": ["wood chair"],
+                "questionnaire": {
+                    "roomType": "living room",
+                    "budgetMinor": 30000,
+                    "currency": "USD",
+                    "effort": "buy_only",
+                    "designDensity": "minimalist",
+                    "userAge": 28,
+                    "goals": ["comfortable seating"],
+                    "optionalStyles": [],
+                },
             }
         ],
         "swipes": [
@@ -122,28 +134,17 @@ async def test_preference_and_product_selection_routes_use_ml_service() -> None:
     }
 
 
-def test_recommendation_output_fits_room_generation_request() -> None:
-    request = GenerateFinalDesignRequest.model_validate(
-        {
-            "room": {
-                "roomType": "living room",
-                "palette": ["cream", "light oak"],
-                "existingFurniture": ["sofa"],
-                "emptyZones": ["work corner"],
-                "lighting": "natural daylight",
-                "architecturalConstraints": ["rental"],
-                "confidence": 0.9,
-            },
-            "recommendation": example_output()["recommendedDesign"],
-        }
-    )
+def test_recommendation_output_fits_room_generation_contract() -> None:
+    recommendation = RecommendedDesign.model_validate(example_output()["recommendedDesign"])
 
-    assert request.recommendation.name == "Japandi"
-    assert sum(item.max_price_minor for item in request.recommendation.items) <= 50_000
+    assert recommendation.name == "Japandi"
+    assert sum(item.max_price_minor for item in recommendation.items) <= 50_000
 
 
 class StubImageService:
     async def generate_final_design(self, **request: Any) -> FinalDesignManifest:
+        assert request["image"] == b"original-room"
+        assert request["content_type"] == "image/jpeg"
         assert request["recommendation"].name == "Japandi"
         first_item = request["recommendation"].items[0]
         return FinalDesignManifest(
@@ -167,15 +168,6 @@ async def test_orchestrator_passes_ml_recommendation_to_room_generation() -> Non
     candidates = [
         FinalRecommendationCandidate.model_validate(candidate) for candidate in example_input()
     ]
-    room = RoomAnalysis(
-        room_type="living room",
-        palette=["cream", "light oak"],
-        existing_furniture=["sofa"],
-        empty_zones=["work corner"],
-        lighting="natural daylight",
-        architectural_constraints=["rental"],
-        confidence=0.9,
-    )
     orchestrator = RoomSwipeOrchestrator(
         RoomSwipeServices(
             images=StubImageService(),  # type: ignore[arg-type]
@@ -185,7 +177,8 @@ async def test_orchestrator_passes_ml_recommendation_to_room_generation() -> Non
     )
 
     manifest = await orchestrator.generate_recommended_room(
-        room=room,
+        image=b"original-room",
+        content_type="image/jpeg",
         candidates=candidates,
     )
 

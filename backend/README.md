@@ -31,6 +31,10 @@ pip install -e '.[dev]'
 uvicorn roomswipe_api.main:app --reload
 ```
 
+### Configure and test image generation
+
+Copy `.env.example` to `.env` and set `OPENAI_API_KEY` to an API key. Do not commit `.env`: it is a local secrets file. Open `http://127.0.0.1:8000/docs` and use **POST `/api/v1/images/generate-designs`**. Send the empty-room photo in the `image` form field, its questionnaire JSON (including one `userAge`) in the `questionnaire` form field, and set `count` to `10`. Each result is an edit of that uploaded room, including a browser-displayable image URL, style name, warmth, lighting, included items, numeric attributes, and the complete questionnaire used to create it.
+
 ## Checks
 
 ```bash
