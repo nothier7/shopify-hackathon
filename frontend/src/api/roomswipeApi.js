@@ -1,4 +1,8 @@
-const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
+import { productOfferPayload } from '@/lib/productOptions';
+
+const DEFAULT_API_BASE_URL = import.meta.env.DEV
+  ? 'http://127.0.0.1:8000/api/v1'
+  : '/api/v1';
 
 const API_BASE_URL = (
   import.meta.env.VITE_ROOMSWIPE_API_BASE_URL || DEFAULT_API_BASE_URL
@@ -129,5 +133,8 @@ export function selectProducts(profile, offers, budgetMinor) {
 }
 
 export function createCarts(offers) {
-  return jsonRequest('/commerce/carts', { offers, country: 'US' });
+  return jsonRequest('/commerce/carts', {
+    offers: offers.map(productOfferPayload),
+    country: 'US'
+  });
 }

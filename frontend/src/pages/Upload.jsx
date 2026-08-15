@@ -7,6 +7,8 @@ import { useSession } from '@/lib/SessionContext';
 import { generateDesigns } from '@/api/roomswipeApi';
 import { cn } from '@/lib/utils';
 
+const MAX_ROOM_IMAGE_BYTES = 4_000_000;
+
 export default function Upload() {
   const navigate = useNavigate();
   const { questionnaire, savePhoto, saveDesigns } = useSession();
@@ -29,8 +31,8 @@ export default function Upload() {
       setError('Choose a JPEG, PNG, or WebP room photo.');
       return;
     }
-    if (f.size > 10_000_000) {
-      setError('Choose an image smaller than 10MB.');
+    if (f.size > MAX_ROOM_IMAGE_BYTES) {
+      setError('Choose an image smaller than 4MB.');
       return;
     }
     if (preview) URL.revokeObjectURL(preview);
@@ -125,7 +127,7 @@ export default function Upload() {
                 <UploadCloud className="w-5 h-5 text-foreground" strokeWidth={1.5} />
               </div>
               <p className="font-display text-lg mb-1">Drop your room photo here</p>
-              <p className="text-sm text-muted-foreground font-light">or click to browse — JPG, PNG up to 10MB</p>
+              <p className="text-sm text-muted-foreground font-light">or click to browse — JPG, PNG up to 4MB</p>
             </div>
           )}
         </div>

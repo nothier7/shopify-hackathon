@@ -1,0 +1,12 @@
+.git/
+.vercel/
+**/.env
+**/.env.local
+**/.venv/
+**/node_modules/
+**/dist/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+docs/
+empty_room.jpg
