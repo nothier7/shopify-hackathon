@@ -6,7 +6,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_env: str = "development"
-    allowed_origins: str = "http://localhost:3000"
+    allowed_origins: str = (
+        "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173"
+    )
 
     openai_api_key: str | None = None
     openai_image_model: str | None = None
