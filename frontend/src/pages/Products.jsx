@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingBag, RotateCw } from 'lucide-react';
@@ -7,6 +7,10 @@ import { Image } from '@/components/ui/image';
 import ProductCard from '@/components/ProductCard';
 import CartDrawer from '@/components/CartDrawer';
 import { useSession } from '@/lib/SessionContext';
+import {
+  groupProductOptions,
+  mergeRankedProductOptions
+} from '@/lib/productOptions';
 import {
   budgetToMinor,
   createCarts,
@@ -48,7 +52,7 @@ export default function Products() {
         const candidates = await searchProducts(manifest, budgetMinor);
         const ranked = await selectProducts(preferenceProfile, candidates, budgetMinor);
         if (cancelled) return;
-        setOffers(ranked);
+        setOffers(mergeRankedProductOptions(candidates, ranked));
         setLoading(false);
       } catch (requestError) {
         if (cancelled) return;
@@ -63,6 +67,19 @@ export default function Products() {
       cancelled = true;
     };
   }, [attempt, budgetMinor, manifest, offers.length, preferenceProfile, setOffers]);
+
+  const offerGroups = useMemo(
+    () => groupProductOptions(manifest, offers),
+    [manifest, offers]
+  );
+  const selectedBySlot = useMemo(
+    () => new Map(selectedOffers.map(offer => [offer.slotId, offer])),
+    [selectedOffers]
+  );
+  const slotLookup = useMemo(
+    () => new Map(offerGroups.map(group => [group.slot.id, group.slot])),
+    [offerGroups]
+  );
 
   if (!manifest || !preferenceProfile || !questionnaire) {
     return <Navigate to="/final" replace />;
@@ -84,6 +101,16 @@ export default function Products() {
     } finally {
       setCreatingCarts(false);
     }
+  };
+
+  const handleChooseAlternative = (slotId) => {
+    setCartOpen(false);
+    window.setTimeout(() => {
+      document.getElementById(`product-options-${slotId}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }, 220);
   };
 
   if (loading) {
@@ -121,7 +148,7 @@ export default function Products() {
               {recommendedDesign?.name || 'Your room'}, <span className="italic">shoppable</span>
             </h1>
             <p className="text-muted-foreground text-sm font-light">
-              {offers.length} products from {merchants.size} {merchants.size === 1 ? 'merchant' : 'merchants'} · Budget {questionnaire.budget}
+              {offerGroups.length} room items · {offers.length} choices from {merchants.size} {merchants.size === 1 ? 'merchant' : 'merchants'} · Budget {questionnaire.budget}
             </p>
           </div>
         </div>
@@ -131,21 +158,48 @@ export default function Products() {
             <p className="text-muted-foreground font-light">No US-shippable Shopify products matched this room.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {offers.map((product, index) => (
-              <motion.div
-                key={product.variantId}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
-              >
-                <ProductCard
-                  product={product}
-                  onAddToCart={selectOffer}
-                  inCart={selectedOffers.some(selected => selected.variantId === product.variantId)}
-                />
-              </motion.div>
-            ))}
+          <div className="space-y-14">
+            {offerGroups.map((group, groupIndex) => {
+              const selected = selectedBySlot.get(group.slot.id);
+              return (
+                <section
+                  id={`product-options-${group.slot.id}`}
+                  key={group.slot.id}
+                  className="scroll-mt-24 border-t border-border pt-7"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-5">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+                        Item {String(groupIndex + 1).padStart(2, '0')}
+                      </div>
+                      <h2 className="font-display text-2xl capitalize">{group.slot.category}</h2>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {group.offers.length} {group.offers.length === 1 ? 'match' : 'matches'}
+                      {selected ? ` · ${selected.merchantName} selected` : ' · Choose one'}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {group.offers.map((product, optionIndex) => (
+                      <motion.div
+                        key={`${product.productId}:${product.variantId}`}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: optionIndex * 0.05 }}
+                      >
+                        <ProductCard
+                          product={product}
+                          onChoose={selectOffer}
+                          selected={selected?.variantId === product.variantId}
+                          hasSelection={Boolean(selected)}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         )}
       </motion.div>
@@ -172,6 +226,8 @@ export default function Products() {
         carts={merchantCarts}
         failures={cartFailures}
         error={cartError}
+        slotLookup={slotLookup}
+        onChooseAlternative={handleChooseAlternative}
       />
     </div>
   );

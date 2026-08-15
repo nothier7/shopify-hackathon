@@ -56,10 +56,14 @@ export function SessionProvider({ children }) {
       ...current.filter(selected => selected.slotId !== offer.slotId),
       offer
     ]);
+    setMerchantCarts([]);
+    setCartFailures([]);
   }, []);
 
   const removeOffer = useCallback((variantId) => {
     setSelectedOffers(current => current.filter(offer => offer.variantId !== variantId));
+    setMerchantCarts([]);
+    setCartFailures([]);
   }, []);
 
   const saveCartResult = useCallback((result) => {

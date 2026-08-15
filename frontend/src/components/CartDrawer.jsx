@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Check, ExternalLink } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
+import { cartFailureNotice } from '@/lib/productOptions';
 
 export default function CartDrawer({
   open,
@@ -14,13 +15,19 @@ export default function CartDrawer({
   creating,
   carts,
   failures,
-  error
+  error,
+  slotLookup,
+  onChooseAlternative
 }) {
   const remainingMinor = budgetMinor - totalMinor;
   const money = value => (value / 100).toLocaleString(undefined, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
   });
+  const failureNotices = failures.map(failure => ({
+    ...cartFailureNotice(failure, cart, slotLookup),
+    key: `${failure.merchantDomain}-${failure.slotIds.join('-')}`
+  }));
 
   return (
     <AnimatePresence>
@@ -97,13 +104,26 @@ export default function CartDrawer({
               ) : null}
 
               {failures.length > 0 ? (
-                <div className="rounded border border-destructive/30 bg-destructive/5 p-3 text-sm">
-                  <p className="font-medium mb-1">Some merchant carts could not be created</p>
-                  {failures.map(failure => (
-                    <p key={`${failure.merchantDomain}-${failure.slotIds.join('-')}`} className="text-muted-foreground">
-                      {failure.merchantDomain}: {failure.detail}
-                    </p>
-                  ))}
+                <div className="rounded-lg border border-foreground/20 bg-secondary/70 p-4 text-sm">
+                  <p className="font-display text-base mb-3">
+                    {failures.length === 1 ? 'One item needs a quick swap' : 'A few items need a quick swap'}
+                  </p>
+                  <div className="space-y-4">
+                    {failureNotices.map(notice => (
+                      <div key={notice.key}>
+                        <p className="text-muted-foreground leading-relaxed">{notice.message}</p>
+                        {notice.slotId ? (
+                          <button
+                            type="button"
+                            onClick={() => onChooseAlternative(notice.slotId)}
+                            className="mt-2 text-xs uppercase tracking-[0.16em] text-foreground underline underline-offset-4 decoration-foreground/30 hover:decoration-foreground"
+                          >
+                            Choose another
+                          </button>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : null}
 
