@@ -1,260 +1,210 @@
-{
-  "questionnaire": {
-    "room_type": "Bedroom",
-    "budget": { "min_usd": 500, "max_usd": 1000 },
-    "effort_level": "Just add decor",
-    "goals": ["Cozy", "Expensive-looking", "More functional"],
-    "style_preferences": ["Minimal", "Cozy"]
+[
+  {
+    "id": "candidate-scandinavian",
+    "name": "Scandinavian",
+    "imageUrl": "https://example.com/generated/scandinavian.png",
+    "attributes": { "minimalism": 0.85, "warmth": 0.7, "color": 0.25 },
+    "warmth": 0.7,
+    "lighting": "soft natural daylight",
+    "items": ["light oak furniture", "linen textiles", "simple pendant lamp"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "comment": "I like the light oak and natural lighting.",
+    "like": "Yes"
   },
-  "room_analysis": {
-    "room_description": "A small NYC rental bedroom with one front-facing window, a bed against the left wall, a dresser, and limited open floor space.",
-    "approximate_geometry": "Rectangular room with limited walking space between the bed and dresser.",
-    "existing_furniture": ["Bed", "Dresser"],
-    "existing_colors": ["White walls", "Dark brown furniture", "Gray bedding"],
-    "lighting": "One window with moderate natural light and one ceiling light.",
-    "empty_spaces": [
-      "Wall above the bed",
-      "Corner next to the window",
-      "Small area beside the dresser"
-    ],
-    "architectural_constraints": [
-      "Rental: walls and flooring cannot be permanently changed",
-      "Window and doorway must remain unobstructed"
-    ]
+  {
+    "id": "candidate-mid-century-modern",
+    "name": "Mid-century modern",
+    "imageUrl": "https://example.com/generated/mid-century-modern.png",
+    "attributes": { "minimalism": 0.55, "warmth": 0.72, "color": 0.55 },
+    "warmth": 0.72,
+    "lighting": "warm ambient lamps",
+    "items": ["walnut sideboard", "tapered-leg seating", "brass floor lamp"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "comment": "The walnut is good, but I want less visual clutter.",
+    "like": "Yes"
   },
-  "designs_and_swipes": [
-    {
-      "design_id": "design_01",
-      "name": "Warm Minimalist",
-      "description": "Warm lighting, light wood, neutral textiles, minimal decor, and one plant.",
-      "style_metadata": {
-        "warmth": 0.9,
-        "minimalism": 0.9,
-        "natural_materials": 0.8,
-        "colorfulness": 0.2,
-        "modern": 0.8,
-        "vintage": 0.1
-      },
-      "swipe": "like",
-      "user_comment": "I like the warm lighting and wood."
+  {
+    "id": "candidate-japandi",
+    "name": "Japandi",
+    "imageUrl": "https://example.com/generated/japandi.png",
+    "attributes": { "minimalism": 0.9, "warmth": 0.62, "color": 0.2 },
+    "warmth": 0.62,
+    "lighting": "diffused natural daylight",
+    "items": ["low-profile wood furniture", "paper lantern", "ceramic accents"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
     },
-    {
-      "design_id": "design_02",
-      "name": "NYC Vintage",
-      "description": "Dark wood, vintage wall art, warm lamps, and layered textiles.",
-      "style_metadata": {
-        "warmth": 0.8,
-        "minimalism": 0.3,
-        "natural_materials": 0.7,
-        "colorfulness": 0.4,
-        "modern": 0.2,
-        "vintage": 0.9
-      },
-      "swipe": "pass",
-      "user_comment": "Too much decor."
-    },
-    {
-      "design_id": "design_03",
-      "name": "Japandi",
-      "description": "Low-profile furniture, warm wood, cream textiles, and uncluttered surfaces.",
-      "style_metadata": {
-        "warmth": 0.8,
-        "minimalism": 0.9,
-        "natural_materials": 0.9,
-        "colorfulness": 0.1,
-        "modern": 0.7,
-        "vintage": 0.1
-      },
-      "swipe": "like",
-      "user_comment": "Keep the natural materials."
-    },
-    {
-      "design_id": "design_04",
-      "name": "Cozy Dark Academia",
-      "description": "Dark colors, vintage details, layered lighting, books, and heavy textiles.",
-      "style_metadata": {
-        "warmth": 0.7,
-        "minimalism": 0.2,
-        "natural_materials": 0.6,
-        "colorfulness": 0.3,
-        "modern": 0.1,
-        "vintage": 0.9
-      },
-      "swipe": "pass",
-      "user_comment": "Too dark and too busy."
-    },
-    {
-      "design_id": "design_05",
-      "name": "Soft Modern",
-      "description": "Rounded furniture, neutral colors, soft lighting, and simple storage.",
-      "style_metadata": {
-        "warmth": 0.7,
-        "minimalism": 0.8,
-        "natural_materials": 0.5,
-        "colorfulness": 0.2,
-        "modern": 0.9,
-        "vintage": 0.1
-      },
-      "swipe": "like",
-      "user_comment": "I like the simple storage."
-    },
-    {
-      "design_id": "design_06",
-      "name": "Colorful Modern",
-      "description": "Bright accent colors, modern furniture, bold wall art, and colorful textiles.",
-      "style_metadata": {
-        "warmth": 0.5,
-        "minimalism": 0.5,
-        "natural_materials": 0.3,
-        "colorfulness": 0.9,
-        "modern": 0.9,
-        "vintage": 0.1
-      },
-      "swipe": "pass",
-      "user_comment": "Too colorful."
-    },
-    {
-      "design_id": "design_07",
-      "name": "Natural Cozy",
-      "description": "Warm wood, textured cream fabrics, plants, and soft ambient lighting.",
-      "style_metadata": {
-        "warmth": 0.9,
-        "minimalism": 0.7,
-        "natural_materials": 0.9,
-        "colorfulness": 0.2,
-        "modern": 0.6,
-        "vintage": 0.2
-      },
-      "swipe": "like",
-      "user_comment": "This feels cozy without being cluttered."
-    },
-    {
-      "design_id": "design_08",
-      "name": "Industrial",
-      "description": "Black metal, exposed textures, dark wood, and functional lighting.",
-      "style_metadata": {
-        "warmth": 0.3,
-        "minimalism": 0.6,
-        "natural_materials": 0.5,
-        "colorfulness": 0.1,
-        "modern": 0.7,
-        "vintage": 0.3
-      },
-      "swipe": "pass",
-      "user_comment": "The black metal feels too cold."
-    },
-    {
-      "design_id": "design_09",
-      "name": "Modern Luxury",
-      "description": "Neutral furniture, polished finishes, statement lighting, and minimal decor.",
-      "style_metadata": {
-        "warmth": 0.5,
-        "minimalism": 0.7,
-        "natural_materials": 0.3,
-        "colorfulness": 0.2,
-        "modern": 0.9,
-        "vintage": 0.1
-      },
-      "swipe": "pass",
-      "user_comment": "Looks expensive but not warm enough."
-    },
-    {
-      "design_id": "design_10",
-      "name": "Warm Functional",
-      "description": "Warm neutral colors, compact storage, soft lighting, and a clear walking path.",
-      "style_metadata": {
-        "warmth": 0.9,
-        "minimalism": 0.8,
-        "natural_materials": 0.7,
-        "colorfulness": 0.2,
-        "modern": 0.7,
-        "vintage": 0.1
-      },
-      "swipe": "like",
-      "user_comment": "Good balance of cozy and functional."
-    }
-  ],
-  "iteration_request": {
-    "user_comments": [
-      "Make it more cozy",
-      "Keep the room minimal",
-      "Use warm lighting and natural wood",
-      "Do not use white furniture",
-      "Stay within budget"
-    ]
+    "comment": "Natural wood and the uncluttered layout work well.",
+    "like": "Yes"
   },
-  "shopify_product_candidates": [
-    {
-      "product_id": "product_001",
-      "title": "Beige Boucle Accent Chair",
-      "description": "Compact beige boucle chair for a small bedroom corner.",
-      "category": "Chair",
-      "appearance": "Soft and rounded",
-      "style": "Modern",
-      "color": "Beige",
-      "material": "Boucle",
-      "price_usd": 189,
-      "merchant": "Merchant A"
+  {
+    "id": "candidate-industrial-loft",
+    "name": "Industrial loft",
+    "imageUrl": "https://example.com/generated/industrial-loft.png",
+    "attributes": { "minimalism": 0.45, "warmth": 0.35, "color": 0.35 },
+    "warmth": 0.35,
+    "lighting": "directional track lighting",
+    "items": ["metal shelving", "leather seating", "exposed-style fixtures"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
     },
-    {
-      "product_id": "product_002",
-      "title": "Walnut Bedside Table",
-      "description": "Small walnut bedside table with one storage drawer.",
-      "category": "Bedside table",
-      "appearance": "Compact with rounded corners",
-      "style": "Minimal",
-      "color": "Warm brown",
-      "material": "Walnut wood",
-      "price_usd": 129,
-      "merchant": "Merchant B"
+    "comment": "Too cold and too much metal.",
+    "like": "No"
+  },
+  {
+    "id": "candidate-contemporary",
+    "name": "Contemporary",
+    "imageUrl": "https://example.com/generated/contemporary.png",
+    "attributes": { "minimalism": 0.7, "warmth": 0.5, "color": 0.45 },
+    "warmth": 0.5,
+    "lighting": "layered recessed and accent lighting",
+    "items": ["clean-lined sofa", "abstract art", "sculptural table lamp"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
     },
-    {
-      "product_id": "product_003",
-      "title": "Arched Floor Lamp",
-      "description": "Warm floor lamp with an arched shape and soft ambient light.",
-      "category": "Floor lamp",
-      "appearance": "Arched",
-      "style": "Modern",
-      "color": "Brass and cream",
-      "material": "Metal and fabric",
-      "price_usd": 74,
-      "merchant": "Merchant C"
+    "like": "No"
+  },
+  {
+    "id": "candidate-bohemian",
+    "name": "Bohemian",
+    "imageUrl": "https://example.com/generated/bohemian.png",
+    "attributes": { "minimalism": 0.25, "warmth": 0.82, "color": 0.8 },
+    "warmth": 0.82,
+    "lighting": "golden table and floor lamps",
+    "items": ["woven rug", "plants", "textured pillows"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
     },
-    {
-      "product_id": "product_004",
-      "title": "Cream Area Rug",
-      "description": "Textured cream rug that adds warmth without bright colors.",
-      "category": "Rug",
-      "appearance": "Soft textured surface",
-      "style": "Cozy minimal",
-      "color": "Cream",
-      "material": "Wool blend",
-      "price_usd": 116,
-      "merchant": "Merchant D"
+    "comment": "Too colorful and busy.",
+    "like": "No"
+  },
+  {
+    "id": "candidate-coastal",
+    "name": "Coastal",
+    "imageUrl": "https://example.com/generated/coastal.png",
+    "attributes": { "minimalism": 0.6, "warmth": 0.68, "color": 0.45 },
+    "warmth": 0.68,
+    "lighting": "bright natural daylight",
+    "items": ["linen sofa", "rattan accents", "airy curtains"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
     },
-    {
-      "product_id": "product_005",
-      "title": "Neutral Wall Art Set",
-      "description": "Minimal neutral wall art for the empty wall above the bed.",
-      "category": "Wall art",
-      "appearance": "Simple abstract shapes",
-      "style": "Minimal",
-      "color": "Cream and warm brown",
-      "material": "Paper and wood frame",
-      "price_usd": 52,
-      "merchant": "Merchant E"
+    "comment": "I like the linen, but not a strong beach theme.",
+    "like": "Yes"
+  },
+  {
+    "id": "candidate-art-deco",
+    "name": "Art Deco",
+    "imageUrl": "https://example.com/generated/art-deco.png",
+    "attributes": { "minimalism": 0.3, "warmth": 0.6, "color": 0.75 },
+    "warmth": 0.6,
+    "lighting": "dramatic warm accent lighting",
+    "items": ["velvet chair", "geometric mirror", "brass details"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
     },
-    {
-      "product_id": "product_006",
-      "title": "Woven Storage Basket",
-      "description": "Natural woven basket for compact bedroom storage.",
-      "category": "Storage",
-      "appearance": "Textured woven surface",
-      "style": "Natural",
-      "color": "Natural tan",
-      "material": "Woven fiber",
-      "price_usd": 48,
-      "merchant": "Merchant F"
-    }
-  ]
-}
+    "comment": "Too decorative for the room.",
+    "like": "No"
+  },
+  {
+    "id": "candidate-modern-farmhouse",
+    "name": "Modern farmhouse",
+    "imageUrl": "https://example.com/generated/modern-farmhouse.png",
+    "attributes": { "minimalism": 0.45, "warmth": 0.78, "color": 0.35 },
+    "warmth": 0.78,
+    "lighting": "warm pendant and table lighting",
+    "items": ["wood dining table", "neutral upholstery", "vintage-style rug"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "like": "No"
+  },
+  {
+    "id": "candidate-eclectic",
+    "name": "Eclectic",
+    "imageUrl": "https://example.com/generated/eclectic.png",
+    "attributes": { "minimalism": 0.15, "warmth": 0.74, "color": 0.9 },
+    "warmth": 0.74,
+    "lighting": "layered lamps and natural light",
+    "items": ["gallery wall", "mixed-pattern textiles", "statement chair"],
+    "questionnaire": {
+      "roomType": "living room",
+      "budgetMinor": 50000,
+      "currency": "USD",
+      "effort": "buy_only",
+      "designDensity": "minimalist",
+      "userAge": 28,
+      "goals": ["comfortable seating", "a small work corner"],
+      "optionalStyles": []
+    },
+    "comment": "Far too colorful and busy.",
+    "like": "No"
+  }
+]

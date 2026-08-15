@@ -106,15 +106,33 @@ class RecommendationTests(unittest.TestCase):
         expected = json.loads(
             (REPOSITORY_ROOT / "model_output.example.json").read_text(encoding="utf-8")
         )
-        self.assertEqual(recommend_payload(payload), expected)
+        actual = recommend_payload(payload)
+        self.assertEqual(actual, expected)
+        self.assertEqual(set(actual), {"recommendedDesign"})
+        item_caps = [
+            item["maxPriceMinor"] for item in actual["recommendedDesign"]["items"]
+        ]
+        self.assertLessEqual(
+            sum(item_caps), actual["recommendedDesign"]["budget"]["maxTotalMinor"]
+        )
 
-    def test_shared_input_is_strict_and_rejects_photo_fields(self) -> None:
+    def test_shared_input_is_strict_and_comment_is_optional(self) -> None:
         payload = json.loads(
             (REPOSITORY_ROOT / "model_input.example.json").read_text(encoding="utf-8")
         )
-        payload["photo_url"] = "not accepted"
-        with self.assertRaisesRegex(ValueError, "extra=.*photo_url"):
+        self.assertNotIn("comment", payload[4])
+        recommend_payload(payload)
+
+        payload[0]["photoData"] = "not accepted"
+        with self.assertRaisesRegex(ValueError, "extra=.*photoData"):
             recommend_payload(payload)
+
+    def test_shared_input_requires_exactly_ten_swipes(self) -> None:
+        payload = json.loads(
+            (REPOSITORY_ROOT / "model_input.example.json").read_text(encoding="utf-8")
+        )
+        with self.assertRaisesRegex(ValueError, "exactly 10"):
+            recommend_payload(payload[:-1])
 
 
 if __name__ == "__main__":

@@ -24,3 +24,13 @@ uvicorn roomswipe_api.main:app --reload
 ```
 
 Open `http://localhost:8000/docs` for the API contract and `http://localhost:8000/health` for the health check.
+
+## ML payload
+
+The final recommendation model accepts exactly 10 design dictionaries. Each dictionary contains the shared questionnaire, design metadata, `like: "Yes" | "No"`, and an optional `comment`. It returns one recommended design with budget-capped product descriptions for Shopify search.
+
+```bash
+python -m ML model_input.example.json
+```
+
+See `model_input.example.json` and `model_output.example.json` for the complete contract.
