@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { UploadCloud, Check, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/SessionContext';
-import { base44 } from '@/api/base44Client';
+import { generateDesigns } from '@/api/roomswipeClient';
 import { cn } from '@/lib/utils';
 
 export default function Upload() {
@@ -39,28 +39,16 @@ export default function Upload() {
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      setLoadingMessage('Uploading your room photo');
-      const uploadRes = await base44.integrations.Core.UploadFile({ file });
-
       setLoadingMessage('Designing room variations');
-      const session = await createSession(uploadRes.file_url);
-
-      const response = await base44.functions.invoke('generateRoomDesigns', {
-        room_type: questionnaire.room_type,
-        budget: questionnaire.budget,
-        diy_level: questionnaire.diy_level,
-        goal: questionnaire.goal,
-        style_preferences: questionnaire.style_preferences,
-        photo_url: uploadRes.file_url
-      });
-
-      await saveDesigns(response.data.designs, session.id);
+      const candidates = await generateDesigns(file, questionnaire);
+      const session = await createSession(file, preview);
+      await saveDesigns(candidates, session.id);
       navigate('/swipe');
     } catch (err) {
       console.error(err);
       setLoading(false);
       setLoadingMessage('');
-      alert('Something went wrong. Please try again.');
+      alert(err.message || 'Something went wrong. Please try again.');
     }
   };
 
@@ -94,7 +82,7 @@ export default function Upload() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             className="hidden"
             onChange={(e) => handleFile(e.target.files[0])}
           />

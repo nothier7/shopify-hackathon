@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Image } from '@/components/ui/image';
 import StyleProfileBar from '@/components/StyleProfileBar';
 import { useSession } from '@/lib/SessionContext';
-import { base44 } from '@/api/base44Client';
+import { finalizeRecommendation, generateFinalDesign } from '@/api/roomswipeClient';
 
 const ITERATIONS = [
   { label: 'More cozy', direction: 'more cozy' },
@@ -22,6 +22,7 @@ export default function FinalLook() {
   const { designs, session, finalLook, saveFinalLook, updateFinalLook } = useSession();
   const [loading, setLoading] = useState(true);
   const [iterating, setIterating] = useState(false);
+  const [error, setError] = useState('');
   const computedRef = useRef(false);
 
   useEffect(() => {
@@ -37,62 +38,69 @@ export default function FinalLook() {
     computedRef.current = true;
 
     const compute = async () => {
-      const liked = designs.filter(d => d.swipe_result === 'like');
-      const passed = designs.filter(d => d.swipe_result === 'pass');
+      try {
+        if (!session?.photo_file) throw new Error('The original room photo is missing. Please restart the flow.');
+        const candidates = designs.map(design => design.api_candidate);
+        const swipes = designs.map(design => ({
+          candidateId: design.id,
+          liked: design.swipe_result === 'like',
+          ...(design.swipe_comment ? { comment: design.swipe_comment } : {}),
+        }));
+        const recommendationResult = await finalizeRecommendation(candidates, swipes);
+        const recommendation = recommendationResult.recommendedDesign;
+        const manifest = await generateFinalDesign(session.photo_file, recommendation);
+        const selectedDesign = designs.find(design => design.style_name === recommendation.name);
 
-      const response = await base44.functions.invoke('computeFinalLook', {
-        questionnaire: session,
-        liked_designs: liked.map(d => ({
-          style_name: d.style_name,
-          description: d.description,
-          style_metadata: d.style_metadata
-        })),
-        passed_designs: passed.map(d => ({
-          style_name: d.style_name,
-          description: d.description
-        }))
-      });
-
-      const imageRes = await base44.functions.invoke('generateRoomImage', {
-        prompt: response.data.final_look_prompt,
-        reference_image_url: session?.photo_url
-      });
-
-      await saveFinalLook({
-        ...response.data,
-        final_look_url: imageRes.data.url
-      });
-      setLoading(false);
+        await saveFinalLook({
+          recommended_design: recommendation,
+          style_profile: selectedDesign?.style_metadata || {},
+          final_look_description: recommendation.description,
+          final_look_prompt: recommendation.description,
+          product_intents: recommendation.items,
+          final_look_url: manifest.finalImageUrl,
+          manifest,
+        });
+      } catch (err) {
+        console.error(err);
+        setError(err.message || 'Could not create the final room.');
+      } finally {
+        setLoading(false);
+      }
     };
     compute();
-  }, []);
+  }, [designs, finalLook?.final_look_url, navigate, saveFinalLook, session]);
 
   const handleIterate = async (direction) => {
     if (iterating) return;
     setIterating(true);
     try {
-      const response = await base44.functions.invoke('iterateFinalLook', {
-        current_prompt: finalLook.final_look_prompt,
-        current_description: finalLook.final_look_description,
+      const manifest = await generateFinalDesign(
+        session.photo_file,
+        finalLook.recommended_design,
         direction,
-        questionnaire: session
-      });
-      const imageRes = await base44.functions.invoke('generateRoomImage', {
-        prompt: response.data.final_look_prompt,
-        reference_image_url: session?.photo_url
-      });
+      );
       updateFinalLook({
-        final_look_description: response.data.final_look_description,
-        final_look_prompt: response.data.final_look_prompt,
-        final_look_url: imageRes.data.url
+        final_look_url: manifest.finalImageUrl,
+        manifest,
       });
     } catch (err) {
       console.error(err);
+      setError(err.message || 'Could not update the final room.');
     }
     setIterating(false);
   };
 
   if (designs.length === 0) return null;
+
+  if (error && !finalLook) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 text-center">
+        <h1 className="font-display text-2xl mb-3">We could not build your final room</h1>
+        <p className="text-muted-foreground mb-6 max-w-lg">{error}</p>
+        <Button variant="outline" onClick={() => navigate('/upload')} className="rounded-full">Try again</Button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -113,6 +121,9 @@ export default function FinalLook() {
           <div className="text-xs uppercase tracking-widest text-muted-foreground mb-4">Your Dream Room</div>
           <h1 className="font-display text-3xl sm:text-4xl mb-3">Your final <span className="italic">look</span></h1>
           <p className="text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">{finalLook?.final_look_description}</p>
+          {finalLook?.recommended_design?.matchPercent != null && (
+            <p className="mt-3 text-sm text-foreground/70">{finalLook.recommended_design.matchPercent}% preference match</p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

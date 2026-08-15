@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
 
 const SessionContext = createContext(null);
 
@@ -25,29 +24,32 @@ export function SessionProvider({ children }) {
   const [matchedProducts, setMatchedProducts] = useState([]);
   const [cart, setCart] = useState([]);
 
-  const createSession = useCallback(async (photoUrl) => {
-    const s = await base44.entities.RoomSession.create({
+  const createSession = useCallback(async (photoFile, photoUrl) => {
+    const s = {
+      id: crypto.randomUUID(),
       ...questionnaire,
+      photo_file: photoFile,
       photo_url: photoUrl,
       budget_value: parseBudgetValue(questionnaire.budget),
       status: 'swiping'
-    });
+    };
     setSession(s);
     return s;
   }, [questionnaire]);
 
   const saveDesigns = useCallback(async (designConcepts, sessionId) => {
-    const records = await base44.entities.RoomDesign.bulkCreate(
-      designConcepts.map((d, i) => ({
+    const records = designConcepts.map((d, i) => ({
         session_id: sessionId,
-        style_name: d.style_name,
-        description: d.description,
-        image_prompt: d.image_prompt,
-        style_metadata: d.style_metadata,
+        id: d.id,
+        style_name: d.name,
+        description: `${d.lighting}; ${d.items.join(', ')}`,
+        image_url: d.imageUrl,
+        style_metadata: d.attributes,
+        api_candidate: d,
         swipe_result: 'pending',
+        swipe_comment: '',
         order_index: i
-      }))
-    );
+      }));
     setDesigns(records);
     return records;
   }, []);
@@ -56,23 +58,14 @@ export function SessionProvider({ children }) {
     setDesigns(prev => prev.map(d => d.id === designId ? { ...d, image_url: imageUrl } : d));
   }, []);
 
-  const swipeDesign = useCallback(async (designId, result) => {
-    setDesigns(prev => prev.map(d => d.id === designId ? { ...d, swipe_result: result } : d));
-    await base44.entities.RoomDesign.update(designId, { swipe_result: result });
+  const swipeDesign = useCallback(async (designId, result, comment = '') => {
+    setDesigns(prev => prev.map(d => d.id === designId
+      ? { ...d, swipe_result: result, swipe_comment: comment.trim() }
+      : d));
   }, []);
 
   const saveFinalLook = useCallback(async (data) => {
-    if (session) {
-      const updated = await base44.entities.RoomSession.update(session.id, {
-        status: 'products',
-        style_profile: data.style_profile,
-        final_look_description: data.final_look_description,
-        final_look_prompt: data.final_look_prompt,
-        product_intents: data.product_intents,
-        final_look_url: data.final_look_url
-      });
-      setSession(updated);
-    }
+    if (session) setSession(prev => ({ ...prev, status: 'products' }));
     setFinalLook(data);
   }, [session]);
 

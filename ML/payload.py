@@ -41,6 +41,10 @@ ATTRIBUTE_FEATURES = {
 GOAL_ALIASES = {
     "comfortable_seating": "guest_ready",
     "cozy": "cozy",
+    "expensive_looking": "look_expensive",
+    "functional": "more_functional",
+    "guest_ready": "guest_ready",
+    "completely_new_vibe": "new_vibe",
     "more_functional": "more_functional",
     "more_storage": "more_storage",
     "organized": "more_storage",

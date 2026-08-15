@@ -4,15 +4,21 @@ import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
-export default function CartDrawer({ open, onClose, cart, onRemove, total, budgetValue, budgetLabel }) {
-  const [created, setCreated] = useState(false);
+export default function CartDrawer({ open, onClose, cart, onRemove, total, budgetValue, budgetLabel, onCreateCarts }) {
+  const [cartResult, setCartResult] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleCreateCart = () => {
-    setCreated(true);
-    setTimeout(() => {
-      setCreated(false);
-      onClose();
-    }, 2500);
+  const handleCreateCart = async () => {
+    setCreating(true);
+    setError('');
+    try {
+      setCartResult(await onCreateCarts(cart));
+    } catch (err) {
+      setError(err.message || 'Could not create Shopify carts.');
+    } finally {
+      setCreating(false);
+    }
   };
 
   const remaining = budgetValue - total;
@@ -44,7 +50,7 @@ export default function CartDrawer({ open, onClose, cart, onRemove, total, budge
               </button>
             </div>
 
-            {created ? (
+            {cartResult ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -56,8 +62,26 @@ export default function CartDrawer({ open, onClose, cart, onRemove, total, budge
                 </motion.div>
                 <h3 className="font-display text-2xl mb-2">Cart Created</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Your room cart with {cart.length} items from {new Set(cart.map(i => i.merchant)).size} {new Set(cart.map(i => i.merchant)).size === 1 ? 'merchant' : 'merchants'} has been created. Ready for checkout.
+                  {cartResult.carts.length} merchant {cartResult.carts.length === 1 ? 'cart is' : 'carts are'} ready for checkout.
                 </p>
+                <div className="w-full mt-6 space-y-3">
+                  {cartResult.carts.map(merchantCart => (
+                    <a
+                      key={merchantCart.cartId}
+                      href={merchantCart.continueUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block rounded-full border border-foreground px-5 py-3 text-sm hover:bg-foreground hover:text-background transition-colors"
+                    >
+                      Continue to {merchantCart.merchantName}
+                    </a>
+                  ))}
+                  {cartResult.failures.map(failure => (
+                    <p key={`${failure.merchantDomain}:${failure.slotIds.join(',')}`} className="text-sm text-destructive">
+                      {failure.merchantDomain}: {failure.detail}
+                    </p>
+                  ))}
+                </div>
               </div>
             ) : (
               <>
@@ -104,11 +128,12 @@ export default function CartDrawer({ open, onClose, cart, onRemove, total, budge
                     variant="outline"
                     className="w-full rounded-full border-foreground text-foreground hover:bg-foreground hover:text-background tracking-wider uppercase text-sm font-normal h-12"
                     size="lg"
-                    disabled={cart.length === 0}
+                    disabled={cart.length === 0 || creating}
                     onClick={handleCreateCart}
                   >
-                    Create Cart
+                    {creating ? 'Creating Carts…' : 'Create Cart'}
                   </Button>
+                  {error && <p className="text-sm text-destructive text-center">{error}</p>}
                 </div>
               </>
             )}

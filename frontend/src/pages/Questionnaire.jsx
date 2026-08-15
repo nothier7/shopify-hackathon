@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowRight, Bed, Sofa, UtensilsCrossed, Briefcase, Utensils, Bath, Baby, Trees, Home,
-  Coffee, Gem, LayoutGrid, Wrench, Users, Sparkles, Circle, Layers, Scale, Shuffle
+  Coffee, Gem, LayoutGrid, Wrench, Users, Sparkles, Circle, Layers, Scale, Shuffle,
+  ShoppingBag, Hammer
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -23,6 +24,12 @@ const ROOM_TYPES = [
 ];
 
 const AGES = ['18-25', '26-35', '36-45', '46-55', '56-65', '65+'];
+
+const EFFORT_LEVELS = [
+  { label: 'Just buy things', value: 'buy_only', icon: ShoppingBag },
+  { label: 'Some rearranging / DIY', value: 'some_diy', icon: Hammer },
+  { label: 'Major redesign', value: 'major_changes', icon: Wrench },
+];
 
 const GOALS = [
   { label: 'Cozy', icon: Coffee },
@@ -45,7 +52,8 @@ export default function Questionnaire() {
   const { setQuestionnaire } = useSession();
   const [data, setData] = useState({
     room_type: '',
-    budget: '',
+    budget: '$3,000',
+    effort: '',
     age: '',
     goal: '',
     style_preferences: []
@@ -68,7 +76,7 @@ export default function Questionnaire() {
     setData(p => ({ ...p, style_preferences: [pref] }));
   };
 
-  const canContinue = data.room_type && data.budget && data.age && data.goal && data.style_preferences.length > 0;
+  const canContinue = data.room_type && data.budget && data.effort && data.age && data.goal && data.style_preferences.length > 0;
 
   const handleContinue = () => {
     setQuestionnaire(data);
@@ -137,7 +145,33 @@ export default function Questionnaire() {
             </div>
           </div>
 
-          {/* Question 3: Age */}
+          {/* Question 3: Effort */}
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-4">How much work are you willing to do?</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {EFFORT_LEVELS.map(({ label, value, icon: Icon }) => {
+                const selected = data.effort === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setData(p => ({ ...p, effort: value }))}
+                    className={cn(
+                      'flex items-center sm:flex-col sm:text-center gap-3 p-4 rounded-xl border transition-all duration-300',
+                      selected
+                        ? 'border-foreground bg-foreground/5 text-foreground'
+                        : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
+                    )}
+                  >
+                    <Icon className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
+                    <span className="text-xs font-medium">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Question 4: Age */}
           <div>
             <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-4">How old are you?</label>
             <div className="flex flex-wrap gap-2">
@@ -162,7 +196,7 @@ export default function Questionnaire() {
             </div>
           </div>
 
-          {/* Question 4: Goals */}
+          {/* Question 5: Goals */}
           <div>
             <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-4">What's your main goal?</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -188,7 +222,7 @@ export default function Questionnaire() {
             </div>
           </div>
 
-          {/* Question 5: Style Preference */}
+          {/* Question 6: Style Preference */}
           <div>
             <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-4">Your aesthetic preference?</label>
             <div className="grid grid-cols-2 gap-3">

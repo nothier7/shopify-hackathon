@@ -1,65 +1,32 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { X, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import SwipeCard from '@/components/SwipeCard';
 import { useSession } from '@/lib/SessionContext';
-import { base44 } from '@/api/base44Client';
 
 export default function Swipe() {
   const navigate = useNavigate();
-  const { designs, swipeDesign, session, updateDesignImage } = useSession();
-  const [loading, setLoading] = useState(true);
-  const [loadingProgress, setLoadingProgress] = useState(0);
+  const { designs, swipeDesign } = useSession();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [buttonSwipe, setButtonSwipe] = useState(null);
   const [exiting, setExiting] = useState(false);
-  const generatedRef = useRef(false);
+  const [currentComment, setCurrentComment] = useState('');
 
   useEffect(() => {
     if (designs.length === 0) {
       navigate('/');
-      return;
     }
-    if (generatedRef.current) return;
-    generatedRef.current = true;
-
-    if (designs.every(d => d.image_url)) {
-      setLoading(false);
-      return;
-    }
-
-    const generateImages = async () => {
-      const batchSize = 3;
-      const initialDesigns = designs;
-      for (let i = 0; i < initialDesigns.length; i += batchSize) {
-        const batch = initialDesigns.slice(i, i + batchSize);
-        await Promise.all(batch.map(async (design) => {
-          if (design.image_url) return;
-          try {
-            const res = await base44.functions.invoke('generateRoomImage', {
-              prompt: design.image_prompt,
-              reference_image_url: session?.photo_url
-            });
-            updateDesignImage(design.id, res.data.url);
-            await base44.entities.RoomDesign.update(design.id, { image_url: res.data.url });
-          } catch (err) {
-            console.error('Image generation failed for', design.id, err);
-          }
-        }));
-        setLoadingProgress(Math.min(i + batchSize, initialDesigns.length));
-      }
-      setLoading(false);
-    };
-    generateImages();
-  }, []);
+  }, [designs.length, navigate]);
 
   const handleSwipe = async (result) => {
     if (exiting) return;
     setExiting(true);
     const design = designs[currentIndex];
-    await swipeDesign(design.id, result);
+    await swipeDesign(design.id, result, currentComment);
+    setCurrentComment('');
     setButtonSwipe(null);
     setTimeout(() => {
       if (currentIndex + 1 >= designs.length) {
@@ -77,26 +44,6 @@ export default function Swipe() {
   };
 
   if (designs.length === 0) return null;
-
-  if (loading) {
-    return (
-      <div className="min-h-[75vh] flex flex-col items-center justify-center px-6">
-        <div className="w-10 h-10 rounded-full border border-foreground/20 border-t-foreground animate-spin mb-8" />
-        <p className="font-display text-2xl mb-2">Generating your room variations</p>
-        <p className="text-muted-foreground mb-8 font-light">
-          {loadingProgress > 0 ? `${loadingProgress} of ${designs.length} rooms ready` : 'Starting…'}
-        </p>
-        <div className="w-64 h-px bg-secondary overflow-hidden">
-          <motion.div
-            className="h-full bg-foreground"
-            initial={{ width: '0%' }}
-            animate={{ width: `${(loadingProgress / designs.length) * 100}%` }}
-            transition={{ duration: 0.5 }}
-          />
-        </div>
-      </div>
-    );
-  }
 
   const visibleCards = designs.slice(currentIndex, currentIndex + 3).reverse();
   const likedCount = designs.filter(d => d.swipe_result === 'like').length;
@@ -134,6 +81,14 @@ export default function Swipe() {
           })}
         </AnimatePresence>
       </div>
+
+      <Textarea
+        value={currentComment}
+        onChange={(event) => setCurrentComment(event.target.value)}
+        placeholder="Optional: tell us what influenced this choice"
+        maxLength={500}
+        className="mb-5 min-h-20 resize-none bg-card"
+      />
 
       <div className="flex items-center justify-center gap-6">
         <Button

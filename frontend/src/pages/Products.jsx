@@ -1,18 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Sparkles } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Image } from '@/components/ui/image';
 import ProductCard from '@/components/ProductCard';
 import CartDrawer from '@/components/CartDrawer';
 import { useSession } from '@/lib/SessionContext';
-import { base44 } from '@/api/base44Client';
+import { createCarts, searchProducts } from '@/api/roomswipeClient';
 
 export default function Products() {
   const navigate = useNavigate();
   const { session, finalLook, matchedProducts, setMatchedProducts, cart, addToCart, removeFromCart } = useSession();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [cartOpen, setCartOpen] = useState(false);
   const matchedRef = useRef(false);
 
@@ -30,13 +31,21 @@ export default function Products() {
 
     const match = async () => {
       try {
-        const response = await base44.functions.invoke('matchProducts', {
-          product_intents: finalLook.product_intents,
-          budget: session.budget
-        });
-        setMatchedProducts(response.data.matches || []);
+        const offers = await searchProducts(finalLook.manifest, session.budget_value * 100);
+        setMatchedProducts(offers.map(offer => ({
+          id: `${offer.productId}:${offer.variantId}`,
+          name: offer.title,
+          merchant: offer.merchantName,
+          price: offer.priceMinor / 100,
+          image_url: offer.imageUrl,
+          match_reason: offer.relaxedPreferences?.length
+            ? `Matched with relaxed ${offer.relaxedPreferences.join(', ')} preferences.`
+            : 'Matched to the recommended room item and budget.',
+          raw_offer: offer,
+        })));
       } catch (err) {
         console.error(err);
+        setError(err.message || 'Could not find Shopify products.');
       }
       setLoading(false);
     };
@@ -44,6 +53,10 @@ export default function Products() {
   }, []);
 
   if (!finalLook) return null;
+
+  const createShopifyCarts = async (selectedProducts) => {
+    return createCarts(selectedProducts.map(product => product.raw_offer));
+  };
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
   const merchants = new Set(matchedProducts.map(p => p.merchant));
@@ -76,7 +89,7 @@ export default function Products() {
 
         {matchedProducts.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-muted-foreground font-light">No products matched your room. Try regenerating your final look.</p>
+            <p className="text-muted-foreground font-light">{error || 'No products matched your room. Try regenerating your final look.'}</p>
             <Button variant="outline" onClick={() => navigate('/final')} className="mt-4 rounded-full">Back to Final Look</Button>
           </div>
         ) : (
@@ -125,6 +138,7 @@ export default function Products() {
         total={cartTotal}
         budgetValue={session.budget_value}
         budgetLabel={session.budget}
+        onCreateCarts={createShopifyCarts}
       />
     </div>
   );

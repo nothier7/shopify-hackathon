@@ -9,19 +9,19 @@ Any change pushed to the repo will also be reflected in the Base44 Builder.
 1. Clone the repository using the project's Git URL.
 2. Navigate to the project directory.
 3. Install dependencies: `npm install`.
-4. Install the Base44 CLI: `npm install -g base44@latest`.
+4. Start the RoomSwipe FastAPI backend from `../backend`.
 
 See the [Base44 CLI docs](https://docs.base44.com/developers/references/cli/get-started/overview) if you want to run Base44 commands directly.
 
 ## Run Locally
 
-Run the full local development environment from the project root:
+For the RoomSwipe core flow, run the frontend locally:
 
 ```bash
-base44 dev
+npm run dev
 ```
 
-`base44 dev` starts the local Base44 development backend and, when this app is configured for it, also starts the frontend dev server for you. Use the frontend URL printed by the command.
+Open `http://localhost:3000`. The Vite development server proxies RoomSwipe API requests to `http://127.0.0.1:8000` by default.
 
 For example, when the Base44 project config includes a `serveCommand`, `base44 dev` can launch the frontend too:
 
@@ -35,15 +35,15 @@ For example, when the Base44 project config includes a `serveCommand`, `base44 d
 
 In a Base44 project this lives in `base44/config.jsonc`.
 
-## Run Only The Frontend
+To use another backend URL, set `ROOMSWIPE_BACKEND_URL` before `npm run dev`. For a production build, set `VITE_ROOMSWIPE_API_URL` to the public FastAPI `/api/v1` URL.
 
-If you only want to work on the frontend against the hosted Base44 backend, run:
+## Optional Base44 development
+
+If you need the optional Base44 resources, use the project-local CLI:
 
 ```bash
-npm run dev
+npx base44 dev
 ```
-
-Open the local URL printed by Vite.
 
 ## Use The Hosted Backend
 
