@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 def to_camel(value: str) -> str:
@@ -60,13 +60,45 @@ class PreferenceProfile(ApiModel):
     disliked_signals: list[str]
 
 
+class ProductChangeType(StrEnum):
+    ADDED = "added"
+    REPLACED = "replaced"
+
+
+class BoundingBox(ApiModel):
+    """A normalized rectangle in the final generated image."""
+
+    x: float = Field(ge=0, le=1)
+    y: float = Field(ge=0, le=1)
+    width: float = Field(gt=0, le=1)
+    height: float = Field(gt=0, le=1)
+
+    @model_validator(mode="after")
+    def fit_inside_image(self) -> "BoundingBox":
+        if self.x + self.width > 1 or self.y + self.height > 1:
+            raise ValueError("bounding box must fit inside the image")
+        return self
+
+
 class ProductSlot(ApiModel):
     id: str
     category: str
-    query: str
-    preferred_colors: list[str] = Field(default_factory=list)
-    preferred_materials: list[str] = Field(default_factory=list)
-    max_price_minor: int = Field(ge=0)
+    search_query: str
+    colors: list[str] = Field(default_factory=list)
+    materials: list[str] = Field(default_factory=list)
+    styles: list[str] = Field(default_factory=list)
+    shape: str | None = None
+    change_type: ProductChangeType
+    must_match: list[str] = Field(default_factory=list)
+    nice_to_have: list[str] = Field(default_factory=list)
+    budget_weight: float = Field(gt=0)
+    confidence: float = Field(ge=0, le=1)
+    bounding_box: BoundingBox | None = None
+
+
+class FinalDesignManifest(ApiModel):
+    final_image_url: str
+    product_slots: list[ProductSlot] = Field(min_length=1)
 
 
 class ProductOffer(ApiModel):
@@ -78,19 +110,33 @@ class ProductOffer(ApiModel):
     merchant_domain: str
     price_minor: int = Field(ge=0)
     currency: str = Field(min_length=3, max_length=3)
-    image_url: str
+    image_url: str | None = None
     checkout_url: str
     available: bool
     match_score: float | None = Field(default=None, ge=0, le=1)
+    relaxed_preferences: list[str] = Field(default_factory=list)
 
 
 class MerchantCart(ApiModel):
+    cart_id: str
     merchant_name: str
     merchant_domain: str
-    offer_ids: list[str]
+    slot_ids: list[str]
+    variant_ids: list[str]
     subtotal_minor: int = Field(ge=0)
     currency: str = Field(min_length=3, max_length=3)
     continue_url: str
+
+
+class MerchantCartFailure(ApiModel):
+    merchant_domain: str
+    slot_ids: list[str]
+    detail: str
+
+
+class CreateCartsResponse(ApiModel):
+    carts: list[MerchantCart]
+    failures: list[MerchantCartFailure]
 
 
 class GenerateDesignsRequest(ApiModel):
@@ -112,9 +158,25 @@ class SelectProductsRequest(ApiModel):
 
 
 class SearchProductsRequest(ApiModel):
-    slots: list[ProductSlot]
+    manifest: FinalDesignManifest
+    budget_minor: int = Field(gt=0)
+    currency: str = Field(default="USD", min_length=3, max_length=3)
     country: str = Field(default="US", min_length=2, max_length=2)
+    region: str | None = None
+    postal_code: str | None = None
+    candidates_per_slot: int = Field(default=3, ge=1, le=10)
+
+    @field_validator("country", "currency")
+    @classmethod
+    def uppercase_code(cls, value: str) -> str:
+        return value.upper()
 
 
 class CreateCartsRequest(ApiModel):
-    offers: list[ProductOffer]
+    offers: list[ProductOffer] = Field(min_length=1)
+    country: str = Field(default="US", min_length=2, max_length=2)
+
+    @field_validator("country")
+    @classmethod
+    def uppercase_country(cls, value: str) -> str:
+        return value.upper()
