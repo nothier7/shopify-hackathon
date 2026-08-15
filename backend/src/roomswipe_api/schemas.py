@@ -1,4 +1,5 @@
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -51,6 +52,7 @@ class DesignCandidate(ApiModel):
 class SwipeEvent(ApiModel):
     candidate_id: str
     liked: bool
+    comment: str | None = None
 
 
 class PreferenceProfile(ApiModel):
@@ -58,6 +60,68 @@ class PreferenceProfile(ApiModel):
     confidence: float = Field(ge=0, le=1)
     liked_signals: list[str]
     disliked_signals: list[str]
+    model_version: int = Field(default=0, ge=0)
+    positive_count: int = Field(default=0, ge=0)
+    negative_count: int = Field(default=0, ge=0)
+
+
+class FinalRecommendationQuestionnaire(ApiModel):
+    room_type: str
+    budget_minor: int = Field(ge=0)
+    currency: str = Field(default="USD", min_length=3, max_length=3)
+    effort: EffortLevel
+    design_density: str
+    user_age: int = Field(ge=0)
+    goals: list[str]
+    optional_styles: list[str] = Field(default_factory=list)
+
+
+class FinalRecommendationCandidate(ApiModel):
+    id: str
+    name: str
+    image_url: str
+    attributes: dict[str, float]
+    warmth: float = Field(ge=0, le=1)
+    lighting: str
+    items: list[str] = Field(min_length=1)
+    questionnaire: FinalRecommendationQuestionnaire
+    comment: str | None = None
+    like: Literal["Yes", "No"]
+
+    @model_validator(mode="after")
+    def validate_model_attributes(self) -> "FinalRecommendationCandidate":
+        required = {"minimalism", "warmth", "color"}
+        if set(self.attributes) != required:
+            raise ValueError(f"attributes must contain exactly {sorted(required)}")
+        if any(not 0 <= value <= 1 for value in self.attributes.values()):
+            raise ValueError("attribute values must be between 0 and 1")
+        if abs(self.warmth - self.attributes["warmth"]) > 0.001:
+            raise ValueError("warmth must equal attributes.warmth")
+        return self
+
+
+class RecommendedItem(ApiModel):
+    name: str
+    description: str
+    max_price_minor: int = Field(ge=0)
+    currency: str = Field(min_length=3, max_length=3)
+
+
+class RecommendationBudget(ApiModel):
+    max_total_minor: int = Field(ge=0)
+    currency: str = Field(min_length=3, max_length=3)
+
+
+class RecommendedDesign(ApiModel):
+    name: str
+    description: str
+    match_percent: int = Field(ge=0, le=100)
+    items: list[RecommendedItem] = Field(min_length=1)
+    budget: RecommendationBudget
+
+
+class FinalRecommendationResponse(ApiModel):
+    recommended_design: RecommendedDesign
 
 
 class ProductChangeType(StrEnum):
@@ -143,6 +207,11 @@ class GenerateDesignsRequest(ApiModel):
     room: RoomAnalysis
     questionnaire: Questionnaire
     count: int = Field(default=6, ge=1, le=10)
+
+
+class GenerateFinalDesignRequest(ApiModel):
+    room: RoomAnalysis
+    recommendation: RecommendedDesign
 
 
 class UpdatePreferencesRequest(ApiModel):

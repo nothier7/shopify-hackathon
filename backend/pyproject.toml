@@ -24,7 +24,8 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["src", ".."]
+include = ["roomswipe_api*", "ML*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

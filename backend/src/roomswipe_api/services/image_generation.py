@@ -2,7 +2,13 @@
 
 from typing import Protocol
 
-from roomswipe_api.schemas import DesignCandidate, PreferenceProfile, Questionnaire, RoomAnalysis
+from roomswipe_api.schemas import (
+    DesignCandidate,
+    FinalDesignManifest,
+    Questionnaire,
+    RecommendedDesign,
+    RoomAnalysis,
+)
 
 
 class ImageGenerationService(Protocol):
@@ -20,6 +26,6 @@ class ImageGenerationService(Protocol):
         self,
         *,
         room: RoomAnalysis,
-        profile: PreferenceProfile,
+        recommendation: RecommendedDesign,
         refinement: str | None = None,
-    ) -> DesignCandidate: ...
+    ) -> FinalDesignManifest: ...

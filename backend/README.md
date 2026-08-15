@@ -43,9 +43,13 @@ ruff check .
 - `GET /health`
 - `POST /api/v1/images/analyze-room`
 - `POST /api/v1/images/generate-designs`
+- `POST /api/v1/images/generate-final-design`
+- `POST /api/v1/recommendations/final-design`
 - `POST /api/v1/recommendations/preferences`
 - `POST /api/v1/recommendations/select-products`
 - `POST /api/v1/commerce/search`
 - `POST /api/v1/commerce/carts`
 
 `commerce/search` accepts Urja's final-image product manifest and returns live offers grouped by `slotId`. Send Nikita's selected offers to `commerce/carts`; the response contains one cart and `continueUrl` per merchant, plus independent merchant failures.
+
+`recommendations/final-design` accepts the 10 enriched swipe candidates documented in the repository-level `model_input.example.json`. Its `recommendedDesign` response can be passed unchanged as the `recommendation` field of `images/generate-final-design`. The final image service then returns the `FinalDesignManifest` required by `commerce/search`.

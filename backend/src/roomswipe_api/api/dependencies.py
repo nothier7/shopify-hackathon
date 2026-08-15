@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 from roomswipe_api.config import get_settings
+from roomswipe_api.services.recommendation import LocalRecommendationService
 from roomswipe_api.services.reference_images import ReferenceImageService
 from roomswipe_api.services.shopify_carts import MerchantEndpointResolver, ShopifyCartService
 from roomswipe_api.services.shopify_catalog import ShopifyCatalogService
@@ -14,6 +15,11 @@ from roomswipe_api.services.shopify_mcp import ShopifyMcpClient
 class ShopifyServices:
     catalog: ShopifyCatalogService
     carts: ShopifyCartService
+
+
+@lru_cache
+def get_recommendation_service() -> LocalRecommendationService:
+    return LocalRecommendationService()
 
 
 @lru_cache
