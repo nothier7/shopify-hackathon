@@ -44,7 +44,7 @@ class RoomAnalysis(ApiModel):
 class DesignCandidate(ApiModel):
     id: str
     name: str
-    image_url: str | None = None
+    image_url: str
     attributes: dict[str, float]
 
 
@@ -110,7 +110,7 @@ class ProductOffer(ApiModel):
     merchant_domain: str
     price_minor: int = Field(ge=0)
     currency: str = Field(min_length=3, max_length=3)
-    image_url: str
+    image_url: str | None = None
     checkout_url: str
     available: bool
     match_score: float | None = Field(default=None, ge=0, le=1)

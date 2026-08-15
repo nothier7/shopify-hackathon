@@ -13,6 +13,10 @@ from roomswipe_api.services.reference_images import (
 from roomswipe_api.services.shopify_mcp import ShopifyMcpClient
 
 
+class ProductOfferUnavailable(RuntimeError):
+    pass
+
+
 class ShopifyCatalogService:
     def __init__(
         self,
@@ -54,6 +58,37 @@ class ShopifyCatalogService:
         ]
         results = await asyncio.gather(*searches)
         return [offer for slot_offers in results for offer in slot_offers]
+
+    async def refresh_offer(self, *, offer: ProductOffer, country: str) -> ProductOffer:
+        content = await self.mcp_client.call_tool(
+            endpoint=self.catalog_endpoint,
+            name="get_product",
+            arguments={
+                "catalog": {
+                    "id": offer.product_id,
+                    "filters": {
+                        "available": True,
+                        "ships_to": {"country": country},
+                    },
+                    "context": {
+                        "address_country": country,
+                        "currency": offer.currency,
+                    },
+                    "view": "summary",
+                }
+            },
+        )
+        product = content.get("product")
+        if not isinstance(product, Mapping):
+            raise ProductOfferUnavailable("selected product is no longer available")
+        variants = product.get("variants")
+        if not isinstance(variants, list):
+            raise ProductOfferUnavailable("selected product has no purchasable variants")
+
+        for variant in variants:
+            if isinstance(variant, Mapping) and variant.get("id") == offer.variant_id:
+                return self._refresh_from_variant(offer, product, variant)
+        raise ProductOfferUnavailable("selected variant is no longer available")
 
     async def _optional_final_image(self, manifest: FinalDesignManifest) -> bytes | None:
         if not any(slot.bounding_box for slot in manifest.product_slots):
@@ -294,3 +329,46 @@ class ShopifyCatalogService:
                 if isinstance(url, str):
                     return url
         return None
+
+    @classmethod
+    def _refresh_from_variant(
+        cls,
+        offer: ProductOffer,
+        product: Mapping[str, Any],
+        variant: Mapping[str, Any],
+    ) -> ProductOffer:
+        availability = variant.get("availability")
+        price = variant.get("price")
+        seller = variant.get("seller")
+        if not isinstance(availability, Mapping) or availability.get("available") is not True:
+            raise ProductOfferUnavailable("selected variant is no longer available")
+        if not isinstance(price, Mapping) or not isinstance(seller, Mapping):
+            raise ProductOfferUnavailable("selected variant details are incomplete")
+
+        amount = price.get("amount")
+        currency = price.get("currency")
+        merchant_name = seller.get("name")
+        merchant_domain = seller.get("domain")
+        checkout_url = variant.get("checkout_url")
+        if not isinstance(amount, int) or isinstance(amount, bool):
+            raise ProductOfferUnavailable("selected variant price is invalid")
+        if not all(
+            isinstance(value, str)
+            for value in (currency, merchant_name, merchant_domain, checkout_url)
+        ):
+            raise ProductOfferUnavailable("selected variant details are incomplete")
+
+        return offer.model_copy(
+            update={
+                "title": product.get("title", offer.title),
+                "merchant_name": merchant_name,
+                "merchant_domain": merchant_domain,
+                "price_minor": amount,
+                "currency": currency,
+                "image_url": cls._image_url(variant)
+                or cls._image_url(product)
+                or offer.image_url,
+                "checkout_url": checkout_url,
+                "available": True,
+            }
+        )

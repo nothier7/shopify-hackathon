@@ -2,7 +2,7 @@
 
 from typing import Protocol
 
-from roomswipe_api.schemas import FinalDesignManifest, MerchantCart, ProductOffer
+from roomswipe_api.schemas import CreateCartsResponse, FinalDesignManifest, ProductOffer
 
 
 class ShopifyCommerceService(Protocol):
@@ -18,11 +18,11 @@ class ShopifyCommerceService(Protocol):
         candidates_per_slot: int,
     ) -> list[ProductOffer]: ...
 
-    async def refresh_offer(self, *, offer: ProductOffer) -> ProductOffer: ...
+    async def refresh_offer(self, *, offer: ProductOffer, country: str) -> ProductOffer: ...
 
     async def create_merchant_carts(
         self,
         *,
         offers: list[ProductOffer],
         country: str,
-    ) -> list[MerchantCart]: ...
+    ) -> CreateCartsResponse: ...

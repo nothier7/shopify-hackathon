@@ -1,7 +1,7 @@
 from collections import deque
 from typing import Any
 
-from roomswipe_api.schemas import FinalDesignManifest
+from roomswipe_api.schemas import FinalDesignManifest, ProductOffer
 from roomswipe_api.services.reference_images import EncodedImage
 from roomswipe_api.services.shopify_catalog import ShopifyCatalogService
 
@@ -145,3 +145,33 @@ def test_budget_is_allocated_proportionally() -> None:
         "lamp-1": 25_000,
         "sofa-1": 75_000,
     }
+
+
+async def test_refresh_offer_uses_current_selected_variant_details() -> None:
+    mcp = StubMcpClient([{"product": catalog_product()}])
+    service = ShopifyCatalogService(
+        mcp_client=mcp,  # type: ignore[arg-type]
+        image_service=StubImageService(),  # type: ignore[arg-type]
+        catalog_endpoint="https://catalog.shopify.com/api/ucp/mcp",
+    )
+    selected = ProductOffer(
+        product_id="gid://shopify/p/lamp",
+        variant_id="gid://shopify/ProductVariant/lamp",
+        slot_id="lamp-1",
+        title="Old title",
+        merchant_name="Old merchant",
+        merchant_domain="old.myshopify.com",
+        price_minor=15_000,
+        currency="USD",
+        checkout_url="https://old.example.com/cart/lamp:1",
+        available=True,
+    )
+
+    refreshed = await service.refresh_offer(offer=selected, country="US")
+
+    assert mcp.calls[0]["name"] == "get_product"
+    assert mcp.calls[0]["arguments"]["catalog"]["id"] == selected.product_id
+    assert refreshed.title == "Venice Antique Brass Arc Floor Lamp"
+    assert refreshed.price_minor == 17_999
+    assert refreshed.merchant_domain == "lamp-shop.myshopify.com"
+    assert refreshed.checkout_url == "https://lamp-shop.example/cart/lamp:1"
