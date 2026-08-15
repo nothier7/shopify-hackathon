@@ -209,10 +209,9 @@ class OpenAIImageGenerationService:
         response = await self._post(
             "/images/edits",
             {
-                "model": self.settings.openai_image_model or "gpt-image-1.5",
+                "model": self.settings.openai_image_model or "gpt-image-2",
                 "images": [{"image_url": image_url}],
                 "prompt": _final_room_edit_prompt(recommendation),
-                "input_fidelity": "high",
                 "size": "1536x1024",
                 "quality": "medium",
                 "output_format": "png",
@@ -231,10 +230,9 @@ class OpenAIImageGenerationService:
         response = await self._post(
             "/images/edits",
             {
-                "model": self.settings.openai_image_model or "gpt-image-1.5",
+                "model": self.settings.openai_image_model or "gpt-image-2",
                 "images": [{"image_url": image_url}],
                 "prompt": _room_edit_prompt(questionnaire, style),
-                "input_fidelity": "high",
                 "size": "1536x1024",
                 "quality": "medium",
                 "output_format": "png",
@@ -255,8 +253,10 @@ class OpenAIImageGenerationService:
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPStatusError as exc:
+            detail = _openai_error_message(exc.response)
+            suffix = f": {detail}" if detail else "."
             raise ImageGenerationError(
-                f"OpenAI request failed ({exc.response.status_code})."
+                f"OpenAI request failed ({exc.response.status_code}){suffix}"
             ) from exc
         except httpx.HTTPError as exc:
             raise ImageGenerationError("Could not reach OpenAI.") from exc
@@ -274,6 +274,16 @@ def _response_text(response: dict[str, Any]) -> str:
             if content.get("type") == "output_text":
                 return content["text"]
     raise ImageGenerationError("OpenAI response did not contain text.")
+
+
+def _openai_error_message(response: httpx.Response) -> str | None:
+    """Extract OpenAI's safe user-facing error reason when one is available."""
+    try:
+        error = response.json().get("error", {})
+    except (json.JSONDecodeError, ValueError):
+        return None
+    message = error.get("message")
+    return message if isinstance(message, str) else None
 
 
 def _candidate_from_response(

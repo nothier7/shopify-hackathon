@@ -36,6 +36,8 @@ async def test_generate_designs_maps_image_and_frontend_metadata() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path == "/v1/images/edits"
         request_data = json.loads(request.content)
+        assert request_data["model"] == "gpt-image-2"
+        assert "input_fidelity" not in request_data
         assert request_data["images"][0]["image_url"].startswith("data:image/jpeg;base64,")
         assert "minimalist" in request_data["prompt"]
         return httpx.Response(200, json={"data": [{"b64_json": "image-bytes"}]})
@@ -68,6 +70,8 @@ async def test_generate_final_design_uses_ml_description_and_returns_manifest() 
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path == "/v1/images/edits"
         request_data = json.loads(request.content)
+        assert request_data["model"] == "gpt-image-2"
+        assert "input_fidelity" not in request_data
         prompt = request_data["prompt"]
         assert "Warm natural reading room" in prompt
         assert "arched brass floor lamp" in prompt
@@ -90,6 +94,30 @@ async def test_generate_final_design_uses_ml_description_and_returns_manifest() 
     assert [slot.id for slot in manifest.product_slots] == ["item-1", "item-2"]
     assert manifest.product_slots[0].search_query == "arched brass floor lamp"
     assert manifest.product_slots[0].confidence == 0.87
+
+
+async def test_openai_error_includes_api_reason() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            400,
+            json={"error": {"message": "Unsupported request parameter."}},
+            request=request,
+        )
+
+    service = OpenAIImageGenerationService(
+        Settings(openai_api_key="test-key"), transport=httpx.MockTransport(handler)
+    )
+
+    try:
+        await service.generate_final_design(
+            image=b"original-room",
+            content_type="image/png",
+            recommendation=recommendation(),
+        )
+    except RuntimeError as exc:
+        assert str(exc) == "OpenAI request failed (400): Unsupported request parameter."
+    else:
+        raise AssertionError("Expected the OpenAI request to fail")
 
 
 def test_manifest_adapter_always_emits_positive_budget_weights() -> None:
