@@ -11,8 +11,8 @@ class Settings(BaseSettings):
     )
 
     openai_api_key: str | None = None
-    openai_image_model: str | None = None
-    openai_vision_model: str = "gpt-4.1-mini"
+    openai_image_model: str = "gpt-image-2"
+    openai_vision_model: str = "gpt-5.6-sol"
 
     shopify_agent_profile_url: str = (
         "https://shopify.dev/ucp/agent-profiles/2026-04-08/valid-with-capabilities.json"
