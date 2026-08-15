@@ -1,59 +1,109 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Sparkles } from 'lucide-react';
+import { ShoppingBag, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Image } from '@/components/ui/image';
 import ProductCard from '@/components/ProductCard';
 import CartDrawer from '@/components/CartDrawer';
 import { useSession } from '@/lib/SessionContext';
-import { base44 } from '@/api/base44Client';
+import {
+  budgetToMinor,
+  createCarts,
+  searchProducts,
+  selectProducts
+} from '@/api/roomswipeApi';
 
 export default function Products() {
-  const navigate = useNavigate();
-  const { session, finalLook, matchedProducts, setMatchedProducts, cart, addToCart, removeFromCart } = useSession();
-  const [loading, setLoading] = useState(true);
+  const {
+    questionnaire,
+    recommendedDesign,
+    manifest,
+    preferenceProfile,
+    offers,
+    setOffers,
+    selectedOffers,
+    selectOffer,
+    removeOffer,
+    merchantCarts,
+    cartFailures,
+    saveCartResult
+  } = useSession();
+  const [loading, setLoading] = useState(offers.length === 0);
+  const [searchError, setSearchError] = useState('');
+  const [cartError, setCartError] = useState('');
   const [cartOpen, setCartOpen] = useState(false);
-  const matchedRef = useRef(false);
+  const [creatingCarts, setCreatingCarts] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const budgetMinor = budgetToMinor(questionnaire?.budget);
 
   useEffect(() => {
-    if (!finalLook) {
-      navigate('/');
-      return;
-    }
-    if (matchedRef.current) return;
-    matchedRef.current = true;
-    if (matchedProducts.length > 0) {
-      setLoading(false);
-      return;
-    }
+    if (!manifest || !preferenceProfile || !budgetMinor || offers.length > 0) return undefined;
+    let cancelled = false;
 
-    const match = async () => {
+    const findProducts = async () => {
+      setLoading(true);
+      setSearchError('');
       try {
-        const response = await base44.functions.invoke('matchProducts', {
-          product_intents: finalLook.product_intents,
-          budget: session.budget
-        });
-        setMatchedProducts(response.data.matches || []);
-      } catch (err) {
-        console.error(err);
+        const candidates = await searchProducts(manifest, budgetMinor);
+        const ranked = await selectProducts(preferenceProfile, candidates, budgetMinor);
+        if (cancelled) return;
+        setOffers(ranked);
+        setLoading(false);
+      } catch (requestError) {
+        if (cancelled) return;
+        console.error(requestError);
+        setSearchError(requestError.message || 'Shopify product search failed.');
+        setLoading(false);
       }
-      setLoading(false);
     };
-    match();
-  }, []);
 
-  if (!finalLook) return null;
+    findProducts();
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt, budgetMinor, manifest, offers.length, preferenceProfile, setOffers]);
 
-  const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
-  const merchants = new Set(matchedProducts.map(p => p.merchant));
+  if (!manifest || !preferenceProfile || !questionnaire) {
+    return <Navigate to="/final" replace />;
+  }
+
+  const totalMinor = selectedOffers.reduce((sum, item) => sum + item.priceMinor, 0);
+  const merchants = new Set(offers.map(product => product.merchantDomain));
+
+  const handleCreateCarts = async () => {
+    if (creatingCarts || selectedOffers.length === 0) return;
+    setCreatingCarts(true);
+    setCartError('');
+    try {
+      const result = await createCarts(selectedOffers);
+      saveCartResult(result);
+    } catch (requestError) {
+      console.error(requestError);
+      setCartError(requestError.message || 'Merchant cart creation failed.');
+    } finally {
+      setCreatingCarts(false);
+    }
+  };
 
   if (loading) {
     return (
       <div className="min-h-[75vh] flex flex-col items-center justify-center px-6">
         <div className="w-10 h-10 rounded-full border border-foreground/20 border-t-foreground animate-spin mb-8" />
-        <p className="font-display text-2xl mb-2">Finding real products</p>
-        <p className="text-muted-foreground font-light">Matching your room design to shoppable furniture…</p>
+        <p className="font-display text-2xl mb-2">Searching live Shopify products</p>
+        <p className="text-muted-foreground font-light">Ranking real products against your learned style…</p>
+      </div>
+    );
+  }
+
+  if (searchError) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 text-center">
+        <p className="font-display text-2xl mb-3">Product search needs another try</p>
+        <p className="text-muted-foreground max-w-lg mb-6" role="alert">{searchError}</p>
+        <Button variant="outline" onClick={() => setAttempt(value => value + 1)} className="rounded-full">
+          <RotateCw className="w-4 h-4 mr-2" /> Retry Shopify search
+        </Button>
       </div>
     );
   }
@@ -63,35 +113,36 @@ export default function Products() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <div className="flex flex-col sm:flex-row gap-6 mb-10">
           <div className="w-full sm:w-48 h-36 rounded overflow-hidden border border-border flex-shrink-0 bg-secondary">
-            <Image src={finalLook.final_look_url} fittingType="fill" className="w-full h-full" />
+            <Image src={manifest.finalImageUrl} fittingType="fill" className="w-full h-full" />
           </div>
           <div className="flex-1 flex flex-col justify-center">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Your Room</div>
-            <h1 className="font-display text-2xl sm:text-3xl mb-2">Your room, <span className="italic">shoppable</span></h1>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Live Shopify matches</div>
+            <h1 className="font-display text-2xl sm:text-3xl mb-2">
+              {recommendedDesign?.name || 'Your room'}, <span className="italic">shoppable</span>
+            </h1>
             <p className="text-muted-foreground text-sm font-light">
-              {matchedProducts.length} products from {merchants.size} {merchants.size === 1 ? 'merchant' : 'merchants'} · Budget {session.budget}
+              {offers.length} products from {merchants.size} {merchants.size === 1 ? 'merchant' : 'merchants'} · Budget {questionnaire.budget}
             </p>
           </div>
         </div>
 
-        {matchedProducts.length === 0 ? (
+        {offers.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-muted-foreground font-light">No products matched your room. Try regenerating your final look.</p>
-            <Button variant="outline" onClick={() => navigate('/final')} className="mt-4 rounded-full">Back to Final Look</Button>
+            <p className="text-muted-foreground font-light">No US-shippable Shopify products matched this room.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {matchedProducts.map((product, i) => (
+            {offers.map((product, index) => (
               <motion.div
-                key={product.id}
+                key={product.variantId}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
               >
                 <ProductCard
                   product={product}
-                  onAddToCart={addToCart}
-                  inCart={cart.some(c => c.id === product.id)}
+                  onAddToCart={selectOffer}
+                  inCart={selectedOffers.some(selected => selected.variantId === product.variantId)}
                 />
               </motion.div>
             ))}
@@ -99,32 +150,28 @@ export default function Products() {
         )}
       </motion.div>
 
-      {cart.length > 0 && (
-        <motion.div
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30"
-        >
-          <Button
-            onClick={() => setCartOpen(true)}
-            size="lg"
-            className="rounded-full shadow-2xl px-6 gap-2 h-14"
-          >
+      {selectedOffers.length > 0 ? (
+        <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30">
+          <Button onClick={() => setCartOpen(true)} size="lg" className="rounded-full shadow-2xl px-6 gap-2 h-14">
             <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
-            {cart.length} {cart.length === 1 ? 'item' : 'items'} · ${cartTotal}
+            {selectedOffers.length} {selectedOffers.length === 1 ? 'item' : 'items'} · ${(totalMinor / 100).toLocaleString()}
             <span className="ml-1 text-xs tracking-wider uppercase opacity-80">View Cart</span>
           </Button>
         </motion.div>
-      )}
+      ) : null}
 
       <CartDrawer
         open={cartOpen}
         onClose={() => setCartOpen(false)}
-        cart={cart}
-        onRemove={removeFromCart}
-        total={cartTotal}
-        budgetValue={session.budget_value}
-        budgetLabel={session.budget}
+        cart={selectedOffers}
+        onRemove={removeOffer}
+        totalMinor={totalMinor}
+        budgetMinor={budgetMinor}
+        onCreateCarts={handleCreateCarts}
+        creating={creatingCarts}
+        carts={merchantCarts}
+        failures={cartFailures}
+        error={cartError}
       />
     </div>
   );
