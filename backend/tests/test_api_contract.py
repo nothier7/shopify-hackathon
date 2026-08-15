@@ -19,7 +19,23 @@ async def test_unconnected_service_is_explicit() -> None:
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post(
             "/api/v1/commerce/search",
-            json={"slots": [], "country": "US"},
+            json={
+                "manifest": {
+                    "finalImageUrl": "https://images.example.com/final-room.jpg",
+                    "productSlots": [
+                        {
+                            "id": "lamp-1",
+                            "category": "floor lamp",
+                            "searchQuery": "arched brass floor lamp",
+                            "changeType": "added",
+                            "budgetWeight": 1,
+                            "confidence": 0.9,
+                        }
+                    ],
+                },
+                "budgetMinor": 30_000,
+                "country": "US",
+            },
         )
 
     assert response.status_code == 501
