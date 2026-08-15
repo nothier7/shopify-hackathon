@@ -69,3 +69,9 @@ class ProductOffer:
     checkout_url: str
     available: bool
     match_score: float | None = None
+    description: str = ""
+    category: str = ""
+    appearance: str = ""
+    style: str = ""
+    color: str = ""
+    material: str = ""

@@ -13,7 +13,23 @@ def _sigmoid(value: float) -> float:
     return 1 / (1 + math.exp(-max(-60, min(60, value))))
 
 
-def rank_and_optimize(
+SIGNAL_ALIASES = {
+    "bold": ("bold", "bright", "colorful"),
+    "cozy": ("cozy", "soft", "textured"),
+    "minimalist": ("minimal", "simple", "uncluttered"),
+    "natural_materials": ("natural", "wood", "walnut", "woven", "plant"),
+    "warm": ("warm", "cream", "beige", "walnut", "brass"),
+    "white_furniture": ("white furniture",),
+}
+
+
+def _matches_signal(key: str, searchable: str) -> bool:
+    signal = key.split(":")[-1]
+    variants = SIGNAL_ALIASES.get(signal, (signal.replace("_", " "),))
+    return any(variant in searchable for variant in variants)
+
+
+def score_offers(
     profile: PreferenceProfile,
     offers: list[ProductOffer],
     budget_minor: int,
@@ -22,11 +38,25 @@ def rank_and_optimize(
     for offer in offers:
         if not offer.available or offer.price_minor > budget_minor:
             continue
-        searchable = offer.title.lower().replace("-", "_")
+        searchable = (
+            " ".join(
+                (
+                    offer.title,
+                    offer.description,
+                    offer.category,
+                    offer.appearance,
+                    offer.style,
+                    offer.color,
+                    offer.material,
+                )
+            )
+            .lower()
+            .replace("-", "_")
+        )
         matched = [
             value
             for key, value in profile.attributes.items()
-            if key.split(":")[-1] in searchable
+            if _matches_signal(key, searchable)
         ]
         preference_score = _sigmoid(sum(matched)) if matched else 0.5
         catalog_score = offer.match_score if offer.match_score is not None else 0.5
@@ -34,6 +64,25 @@ def rank_and_optimize(
             max(0.0, min(1.0, 0.65 * catalog_score + 0.35 * preference_score)), 4
         )
         weighted.append(replace(offer, match_score=score))
+
+    return tuple(
+        sorted(
+            weighted,
+            key=lambda offer: (
+                -(offer.match_score or 0.0),
+                offer.price_minor,
+                offer.product_id,
+            ),
+        )
+    )
+
+
+def rank_and_optimize(
+    profile: PreferenceProfile,
+    offers: list[ProductOffer],
+    budget_minor: int,
+) -> tuple[ProductOffer, ...]:
+    weighted = score_offers(profile, offers, budget_minor)
 
     groups: dict[str, list[ProductOffer]] = defaultdict(list)
     for offer in weighted:

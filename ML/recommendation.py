@@ -12,7 +12,7 @@ from .contracts import (
     SwipeEvent,
 )
 from .model import OnlinePreferenceModel
-from .ranking import rank_and_optimize
+from .ranking import rank_and_optimize, score_offers
 
 
 def update_after_swipe(
@@ -64,6 +64,7 @@ __all__ = [
     "ProductOffer",
     "predict_candidates",
     "rank_and_optimize",
+    "score_offers",
     "update_after_swipe",
     "update_preferences",
 ]

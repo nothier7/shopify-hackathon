@@ -115,16 +115,25 @@ class OnlinePreferenceModel:
                 self.weights.get(key, 0.0) + self.learning_rate * error * value / norm
             )
 
-        reinforced, suppressed = parse_comment(swipe.comment)
-        for key in reinforced:
-            self.weights[key] = self.weights.get(key, 0.0) + self.comment_step
-        for key in suppressed:
-            self.weights[key] = self.weights.get(key, 0.0) - self.comment_step
+        self._apply_comment(swipe.comment)
 
         self.model_version += 1
         self.positive_count += int(swipe.liked)
         self.negative_count += int(not swipe.liked)
         return probability_before
+
+    def _apply_comment(self, comment: str | None) -> bool:
+        reinforced, suppressed = parse_comment(comment)
+        for key in sorted(reinforced):
+            self.weights[key] = self.weights.get(key, 0.0) + self.comment_step
+        for key in sorted(suppressed):
+            self.weights[key] = self.weights.get(key, 0.0) - self.comment_step
+        return bool(reinforced or suppressed)
+
+    def observe_comment(self, comment: str) -> None:
+        """Apply an explicit iteration request without inventing a swipe event."""
+        if self._apply_comment(comment):
+            self.model_version += 1
 
     def to_profile(self) -> PreferenceProfile:
         ranked = sorted(self.weights.items(), key=lambda item: item[1], reverse=True)

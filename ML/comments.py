@@ -13,6 +13,15 @@ COMMENT_RULES = (
         ("material:rattan", "feature:natural_materials"),
     ),
     (re.compile(r"plant|greenery", re.IGNORECASE), ("feature:plants",)),
+    (
+        re.compile(r"natural|organic", re.IGNORECASE),
+        ("feature:natural_materials",),
+    ),
+    (
+        re.compile(r"white furniture", re.IGNORECASE),
+        ("feature:white_furniture", "color:white"),
+    ),
+    (re.compile(r"colorful|colourful|bright", re.IGNORECASE), ("color:bold",)),
     (re.compile(r"warm|warmer|cozy|cosy", re.IGNORECASE), ("style:warm", "style:cozy")),
     (re.compile(r"minimal|uncluttered", re.IGNORECASE), ("style:minimalist",)),
     (
@@ -25,7 +34,7 @@ COMMENT_RULES = (
     ),
 )
 NEGATIVE_CONTEXT = re.compile(
-    r"\b(no|not|avoid|hate|dislike|less|too|without|never|sterile|busy)\b",
+    r"\b(no|not|avoid|hate|dislike|less|too|without|never|sterile|busy|don't)\b",
     re.IGNORECASE,
 )
 

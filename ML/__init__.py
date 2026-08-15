@@ -12,9 +12,11 @@ from .contracts import (
 from .recommendation import (
     predict_candidates,
     rank_and_optimize,
+    score_offers,
     update_after_swipe,
     update_preferences,
 )
+from .payload import recommend_payload
 
 __all__ = [
     "CandidatePrediction",
@@ -26,6 +28,8 @@ __all__ = [
     "SwipeEvent",
     "predict_candidates",
     "rank_and_optimize",
+    "recommend_payload",
+    "score_offers",
     "update_after_swipe",
     "update_preferences",
 ]
