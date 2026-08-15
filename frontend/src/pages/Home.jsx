@@ -46,7 +46,7 @@ export default function Home() {
               Upload a photo, swipe through AI-generated room designs, and discover real products that bring your dream space to life.
             </p>
 
-            <Button variant="outline" size="lg" onClick={handleStart} className="rounded-full px-10 h-14 text-sm tracking-widest uppercase font-normal group">
+            <Button variant="default" size="lg" onClick={handleStart} className="rounded-full px-10 h-14 text-sm tracking-widest uppercase font-normal group">
               Start Designing
               <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>

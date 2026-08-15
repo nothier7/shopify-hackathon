@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -52,6 +52,13 @@ export default function Questionnaire() {
   });
   const [budgetMax, setBudgetMax] = useState(3000);
 
+  const budgetRef = useRef(null);
+  const goalsRef = useRef(null);
+  const styleRef = useRef(null);
+  const continueRef = useRef(null);
+
+  const scrollTo = (ref) => setTimeout(() => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+
   const handleBudgetChange = (vals) => {
     setBudgetMax(vals[0]);
     setData(p => ({ ...p, budget: `$${vals[0].toLocaleString()}` }));
@@ -92,7 +99,7 @@ export default function Questionnaire() {
                   <button
                     key={label}
                     type="button"
-                    onClick={() => setData(p => ({ ...p, room_type: label }))}
+                    onClick={() => { setData(p => ({ ...p, room_type: label })); scrollTo(budgetRef); }}
                     className={cn(
                       'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-300 group',
                       selected
@@ -109,7 +116,7 @@ export default function Questionnaire() {
           </div>
 
           {/* Question 2: Budget */}
-          <div>
+          <div ref={budgetRef} className="scroll-mt-24">
             <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-4">What's your maximum budget?</label>
             <div className="p-6 rounded-xl border border-border bg-card">
               <div className="flex items-baseline gap-1 mb-6">
@@ -147,7 +154,7 @@ export default function Questionnaire() {
                   <button
                     key={age}
                     type="button"
-                    onClick={() => setData(p => ({ ...p, age }))}
+                    onClick={() => { setData(p => ({ ...p, age })); scrollTo(goalsRef); }}
                     className={cn(
                       'px-5 py-2.5 rounded-full border text-sm font-medium transition-all duration-300',
                       selected
@@ -163,7 +170,7 @@ export default function Questionnaire() {
           </div>
 
           {/* Question 4: Goals */}
-          <div>
+          <div ref={goalsRef} className="scroll-mt-24">
             <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-4">What's your main goal?</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {GOALS.map(({ label, icon: Icon }) => {
@@ -172,7 +179,7 @@ export default function Questionnaire() {
                   <button
                     key={label}
                     type="button"
-                    onClick={() => setData(p => ({ ...p, goal: label }))}
+                    onClick={() => { setData(p => ({ ...p, goal: label })); scrollTo(styleRef); }}
                     className={cn(
                       'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-300 group',
                       selected
@@ -189,7 +196,7 @@ export default function Questionnaire() {
           </div>
 
           {/* Question 5: Style Preference */}
-          <div>
+          <div ref={styleRef} className="scroll-mt-24">
             <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-4">Your aesthetic preference?</label>
             <div className="grid grid-cols-2 gap-3">
               {STYLE_PREFS.map(({ label, icon: Icon }) => {
@@ -198,7 +205,7 @@ export default function Questionnaire() {
                   <button
                     key={label}
                     type="button"
-                    onClick={() => handleStylePref(label)}
+                    onClick={() => { handleStylePref(label); scrollTo(continueRef); }}
                     className={cn(
                       'flex items-center gap-3 p-4 rounded-xl border transition-all duration-300 group',
                       selected
@@ -216,11 +223,12 @@ export default function Questionnaire() {
         </div>
 
         <Button
-          variant="outline"
+          ref={continueRef}
+          variant="default"
           onClick={handleContinue}
           disabled={!canContinue}
           size="lg"
-          className="w-full mt-10 rounded-full tracking-widest uppercase text-sm font-normal h-14 group"
+          className="w-full mt-10 scroll-mt-24 rounded-full tracking-widest uppercase text-sm font-normal h-14 group"
         >
           Continue
           <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
