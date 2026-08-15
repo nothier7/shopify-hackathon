@@ -50,10 +50,11 @@ ruff check .
 - `POST /api/v1/images/generate-final-design`
 - `POST /api/v1/recommendations/final-design`
 - `POST /api/v1/recommendations/preferences`
+- `POST /api/v1/recommendations/finalize`
 - `POST /api/v1/recommendations/select-products`
 - `POST /api/v1/commerce/search`
 - `POST /api/v1/commerce/carts`
 
 `commerce/search` accepts Urja's final-image product manifest and returns live offers grouped by `slotId`. Send Nikita's selected offers to `commerce/carts`; the response contains one cart and `continueUrl` per merchant, plus independent merchant failures.
 
-`recommendations/final-design` accepts the 10 enriched swipe candidates documented in the repository-level `model_input.example.json`. Its `recommendedDesign` response can be passed unchanged as the `recommendation` field of `images/generate-final-design`. The final image service then returns the `FinalDesignManifest` required by `commerce/search`.
+`recommendations/finalize` accepts exactly ten generated design candidates and one swipe per candidate. It runs the shared ML recommendation model and returns a `recommendedDesign` with budget-capped product descriptions. Pass that object unchanged as the `recommendation` form field of `images/generate-final-design`; the image service returns the `FinalDesignManifest` required by `commerce/search`. `recommendations/final-design` remains as a compatibility endpoint for the repository-level `model_input.example.json` payload.

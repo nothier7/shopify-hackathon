@@ -18,11 +18,6 @@ class ShopifyServices:
 
 
 @lru_cache
-def get_recommendation_service() -> LocalRecommendationService:
-    return LocalRecommendationService()
-
-
-@lru_cache
 def get_shopify_services() -> ShopifyServices:
     settings = get_settings()
     mcp_client = ShopifyMcpClient(
@@ -54,3 +49,8 @@ def get_shopify_catalog_service() -> ShopifyCatalogService:
 
 def get_shopify_cart_service() -> ShopifyCartService:
     return get_shopify_services().carts
+
+
+@lru_cache
+def get_recommendation_service() -> LocalRecommendationService:
+    return LocalRecommendationService()

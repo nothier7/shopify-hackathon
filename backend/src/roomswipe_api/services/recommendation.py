@@ -1,6 +1,7 @@
 """Backend adapter for Nikita's RoomSwipe recommendation engine."""
 
-from typing import Protocol
+from collections.abc import Mapping
+from typing import Any, Protocol
 
 from ML import (
     DesignCandidate as MlDesignCandidate,
@@ -26,6 +27,8 @@ from ML import (
 
 from roomswipe_api.schemas import (
     DesignCandidate,
+    FinalizeRecommendationRequest,
+    FinalizeRecommendationResponse,
     FinalRecommendationCandidate,
     FinalRecommendationResponse,
     PreferenceProfile,
@@ -34,7 +37,16 @@ from roomswipe_api.schemas import (
 )
 
 
+class RecommendationInputError(ValueError):
+    """The recommendation payload does not satisfy the ML contract."""
+
+
 class RecommendationService(Protocol):
+    def finalize(
+        self,
+        request: FinalizeRecommendationRequest,
+    ) -> FinalizeRecommendationResponse: ...
+
     def recommend_final_design(
         self, *, candidates: list[FinalRecommendationCandidate]
     ) -> FinalRecommendationResponse: ...
@@ -58,6 +70,28 @@ class RecommendationService(Protocol):
 
 class LocalRecommendationService:
     """Translate API schemas to the dependency-free ML contracts."""
+
+    def finalize(
+        self,
+        request: FinalizeRecommendationRequest,
+    ) -> FinalizeRecommendationResponse:
+        swipes = {swipe.candidate_id: swipe for swipe in request.swipes}
+        payload: list[dict[str, Any]] = []
+        for candidate in request.candidates:
+            item = candidate.model_dump(mode="json", by_alias=True)
+            swipe = swipes[candidate.id]
+            item["like"] = "Yes" if swipe.liked else "No"
+            if swipe.comment is not None:
+                item["comment"] = swipe.comment
+            payload.append(item)
+
+        try:
+            result = recommend_payload(payload)
+            if not isinstance(result, Mapping):
+                raise ValueError("recommendation output must be an object")
+            return FinalizeRecommendationResponse.model_validate(result)
+        except ValueError as exc:
+            raise RecommendationInputError(str(exc)) from exc
 
     def recommend_final_design(
         self, *, candidates: list[FinalRecommendationCandidate]

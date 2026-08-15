@@ -3,8 +3,6 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-# valid JSON
-
 
 def to_camel(value: str) -> str:
     first, *rest = value.split("_")
@@ -92,30 +90,59 @@ class FinalRecommendationCandidate(DesignCandidate):
         if abs(self.warmth - self.attributes["warmth"]) > 0.001:
             raise ValueError("warmth must equal attributes.warmth")
         return self
-
-
 class RecommendedItem(ApiModel):
     name: str
     description: str
     max_price_minor: int = Field(ge=0)
     currency: str = Field(min_length=3, max_length=3)
 
+    @field_validator("currency")
+    @classmethod
+    def uppercase_currency(cls, value: str) -> str:
+        return value.upper()
 
-class RecommendationBudget(ApiModel):
+
+class RecommendedBudget(ApiModel):
     max_total_minor: int = Field(ge=0)
     currency: str = Field(min_length=3, max_length=3)
 
+    @field_validator("currency")
+    @classmethod
+    def uppercase_currency(cls, value: str) -> str:
+        return value.upper()
 
 class RecommendedDesign(ApiModel):
     name: str
     description: str
     match_percent: int = Field(ge=0, le=100)
     items: list[RecommendedItem] = Field(min_length=1)
-    budget: RecommendationBudget
+    budget: RecommendedBudget
 
 
-class FinalRecommendationResponse(ApiModel):
+class FinalizeRecommendationRequest(ApiModel):
+    candidates: list[DesignCandidate] = Field(min_length=10, max_length=10)
+    swipes: list[SwipeEvent] = Field(min_length=10, max_length=10)
+
+    @model_validator(mode="after")
+    def require_one_swipe_per_candidate(self) -> "FinalizeRecommendationRequest":
+        candidate_ids = [candidate.id for candidate in self.candidates]
+        swipe_ids = [swipe.candidate_id for swipe in self.swipes]
+        if len(set(candidate_ids)) != len(candidate_ids):
+            raise ValueError("candidate ids must be unique")
+        if len(set(swipe_ids)) != len(swipe_ids):
+            raise ValueError("each candidate must have exactly one swipe")
+        if set(candidate_ids) != set(swipe_ids):
+            raise ValueError("swipes must match the candidate ids")
+        return self
+
+
+class FinalizeRecommendationResponse(ApiModel):
     recommended_design: RecommendedDesign
+
+
+# Backward-compatible names used by the original ML integration endpoint.
+RecommendationBudget = RecommendedBudget
+FinalRecommendationResponse = FinalizeRecommendationResponse
 
 
 class ProductChangeType(StrEnum):
@@ -218,10 +245,21 @@ class SearchProductsRequest(ApiModel):
     postal_code: str | None = None
     candidates_per_slot: int = Field(default=3, ge=1, le=10)
 
-    @field_validator("country", "currency")
+    @field_validator("country")
     @classmethod
-    def uppercase_code(cls, value: str) -> str:
-        return value.upper()
+    def require_us_delivery(cls, value: str) -> str:
+        country = value.upper()
+        if country != "US":
+            raise ValueError("only US delivery is supported")
+        return country
+
+    @field_validator("currency")
+    @classmethod
+    def require_usd_budget(cls, value: str) -> str:
+        currency = value.upper()
+        if currency != "USD":
+            raise ValueError("only USD budgets are supported")
+        return currency
 
 
 class CreateCartsRequest(ApiModel):
@@ -230,5 +268,8 @@ class CreateCartsRequest(ApiModel):
 
     @field_validator("country")
     @classmethod
-    def uppercase_country(cls, value: str) -> str:
-        return value.upper()
+    def require_us_delivery(cls, value: str) -> str:
+        country = value.upper()
+        if country != "US":
+            raise ValueError("only US delivery is supported")
+        return country
