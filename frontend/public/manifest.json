@@ -1,0 +1,8 @@
+{
+  "name": "Roomly — Design Your Room",
+  "short_name": "Roomly",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#c46a4a"
+}
