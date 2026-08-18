@@ -1,15 +1,15 @@
-# RoomSwipe — Shopify Hackathon
+# Roomly — Shopify Hackathon
 
-RoomSwipe turns a photo of a room and a few constraints into a personalized room concept, then connects its major elements to visually matching products from Shopify merchants.
+Roomly turns a photo of a room and a few constraints into a personalized room concept, then connects its major elements to visually matching products from Shopify merchants.
 
 ## Workstreams
 
 | Owner | Area | Primary backend module |
 | --- | --- | --- |
 | Anastasia | Frontend and user experience | Separate frontend workstream |
-| Nikita | Preference learning and product ranking | `backend/src/roomswipe_api/services/recommendation.py` |
-| Thierno | Shopify MCP/UCP and backend integration | `backend/src/roomswipe_api/services/shopify_ucp.py` |
-| Urja | Room analysis and image generation | `backend/src/roomswipe_api/services/image_generation.py` |
+| Nikita | Preference learning and product ranking | `backend/src/Roomly_api/services/recommendation.py` |
+| Thierno | Shopify MCP/UCP and backend integration | `backend/src/Roomly_api/services/shopify_ucp.py` |
+| Urja | Room analysis and image generation | `backend/src/Roomly_api/services/image_generation.py` |
 
 The initial backend skeleton lives in [`backend/`](backend/README.md). It exposes a health endpoint and OpenAPI contracts for the three independently owned service boundaries.
 
@@ -20,7 +20,7 @@ cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e '.[dev]'
-uvicorn roomswipe_api.main:app --reload
+uvicorn Roomly_api.main:app --reload
 ```
 
 Open `http://localhost:8000/docs` for the API contract and `http://localhost:8000/health` for the health check.
@@ -42,7 +42,7 @@ py -m venv .venv
 python -m pip install -e ".[dev]"
 Copy-Item .env.example .env
 # Set OPENAI_API_KEY in backend/.env.
-python -m uvicorn roomswipe_api.main:app --reload --port 8000
+python -m uvicorn Roomly_api.main:app --reload --port 8000
 ```
 
 macOS/Linux:
@@ -54,7 +54,7 @@ source .venv/bin/activate
 pip install -e '.[dev]'
 cp .env.example .env
 # Set OPENAI_API_KEY in backend/.env.
-python -m uvicorn roomswipe_api.main:app --reload --port 8000
+python -m uvicorn Roomly_api.main:app --reload --port 8000
 ```
 
 ### 2. Start the frontend
@@ -72,7 +72,7 @@ Open `http://localhost:3000`. Vite proxies `/api/v1` and `/health` to FastAPI on
 If port 8000 is unavailable, run FastAPI on another port and set the proxy target before starting Vite. PowerShell example:
 
 ```powershell
-$env:ROOMSWIPE_BACKEND_URL="http://127.0.0.1:8088"
+$env:Roomly_BACKEND_URL="http://127.0.0.1:8088"
 npm run dev
 ```
 
@@ -95,7 +95,7 @@ Then complete the UI flow and confirm these requests in the browser Network pane
 4. Build This Room: `POST /api/v1/commerce/search` returns Shopify offers.
 5. Create Cart: `POST /api/v1/commerce/carts` returns one cart/continue URL per merchant.
 
-Image endpoints require `OPENAI_API_KEY`. Shopify search/cart calls require network access to the configured MCP/UCP endpoints. For a separately hosted frontend, set `VITE_ROOMSWIPE_API_URL=https://your-api.example.com/api/v1` and add the frontend origin to backend `ALLOWED_ORIGINS`.
+Image endpoints require `OPENAI_API_KEY`. Shopify search/cart calls require network access to the configured MCP/UCP endpoints. For a separately hosted frontend, set `VITE_Roomly_API_URL=https://your-api.example.com/api/v1` and add the frontend origin to backend `ALLOWED_ORIGINS`.
 
 ## ML payload
 
