@@ -2,6 +2,16 @@
 
 Roomly turns a photo of a room and a few constraints into a personalized room concept, then connects its major elements to visually matching products from Shopify merchants.
 
+Sample Input Room:
+
+![input room example](https://github.com/nothier7/shopify-hackathon/blob/master/images/empty_room.jpg?raw=true)
+
+
+Sample Output Room:
+
+![output room example](https://github.com/nothier7/shopify-hackathon/blob/master/images/post_roomly.png?raw=true)
+
+
 ## Workstreams
 
 | Owner | Area | Primary backend module |
